@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Solar System Clock</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
+  <style>
+    body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: black; color: white; font-family: Arial, sans-serif; }
+    canvas { border: 1px solid #333; }
+    #controls { margin-bottom: 10px; }
+    #controls input { margin: 5px; padding: 5px; }
+    #controls button { padding: 5px 10px; }
+    #error { color: red; display: none; }
+  </style>
+</head>
+<body>
+  <div id="controls">
+    <label for="customDate">Select Date (Premium Feature):</label>
+    <input type="date" id="customDate" disabled>
+    <input type="time" id="customTime" disabled>
+    <button id="setDate" disabled>Set Date</button>
+    <button id="resetDate">Reset to Now</button>
+    <div id="error"></div>
+  </div>
+<script>
+let planets = [
+  { name: "Mercury", radius: 50, period: 88, color: [128, 128, 128], size: 10 },
+  { name: "Venus", radius: 90, period: 224.7, color: [255, 165, 0], size: 14 },
+  { name: "Earth", radius: 130, period: 365.25, color: [0, 0, 255], size: 14 },
+  { name: "Mars", radius: 170, period: 687, color: [255, 0, 0], size: 12 },
+  { name: "Jupiter", radius: 210, period: 4332.59, color: [255, 215, 0], size: 20 },
+  { name: "Saturn", radius: 250, period: 10759.22, color: [210, 180, 140], size: 18 },
+  { name: "Uranus", radius: 290, period: 30688.5, color: [0, 255, 255], size: 16 },
+  { name: "Neptune", radius: 330, period: 59800, color: [0, 0, 128], size: 16 }
+];
+
+let isPremium = true; // Simulate premium access
+let customDaysSinceJ2000 = null;
+
+function setup() {
+  createCanvas(1000, 1000);
+  textAlign(CENTER, CENTER);
+  textSize(14);
+
+  // Enable inputs if premium
+  if (isPremium) {
+    document.getElementById('customDate').disabled = false;
+    document.getElementById('customTime').disabled = false;
+    document.getElementById('setDate').disabled = false;
+  }
+
+  // Set date button handler
+  document.getElementById('setDate').addEventListener('click', () => {
+    let dateInput = document.getElementById('customDate').value;
+    let timeInput = document.getElementById('customTime').value;
+    let errorDiv = document.getElementById('error');
+
+    if (!dateInput) {
+      errorDiv.style.display = 'block';
+      errorDiv.textContent = 'Please select a date.';
+      return;
+    }
+
+    let [year, month, day] = dateInput.split('-').map(Number);
+    let [hours, minutes] = timeInput ? timeInput.split(':').map(Number) : [12, 0];
+
+    // Validate year (approx -1B years to now)
+    if (year < -999999998 || year > new Date().getFullYear()) {
+      errorDiv.style.display = 'block';
+      errorDiv.textContent = 'Year must be between -999,999,998 and present.';
+      return;
+    }
+
+    errorDiv.style.display = 'none';
+
+    // Calculate days since J2000
+    let j2000 = new Date(2000, 0, 1, 12, 0, 0);
+    let inputDate = new Date(year, month - 1, day, hours, minutes, 0);
+
+    // For very large year differences, approximate days
+    if (Math.abs(year - 2000) > 10000) {
+      let yearsDiff = year - 2000;
+      customDaysSinceJ2000 = yearsDiff * 365.25; // Approximate, ignoring leap years
+    } else {
+      customDaysSinceJ2000 = (inputDate - j2000) / (1000 * 60 * 60 * 24);
+    }
+  });
+
+  // Reset to current time
+  document.getElementById('resetDate').addEventListener('click', () => {
+    customDaysSinceJ2000 = null;
+    document.getElementById('customDate').value = '';
+    document.getElementById('customTime').value = '';
+    document.getElementById('error').style.display = 'none';
+  });
+}
+
+function draw() {
+  background(0);
+  translate(width / 2, height / 2);
+
+  // Draw Sun
+  fill(255, 255, 0);
+  noStroke();
+  ellipse(0, 0, 30, 30);
+
+  // Use custom date or current time
+  let daysSinceJ2000 = customDaysSinceJ2000;
+  if (daysSinceJ2000 === null) {
+    let now = new Date();
+    let j2000 = new Date(2000, 0, 1, 12, 0, 0);
+    daysSinceJ2000 = (now - j2000) / (1000 * 60 * 60 * 24);
+  }
+
+  // Draw orbits and planets
+  for (let planet of planets) {
+    // Draw orbit
+    noFill();
+    stroke(255, 50);
+    ellipse(0, 0, planet.radius * 2, planet.radius * 2);
+
+    // Calculate planet position
+    let angle = (TWO_PI * daysSinceJ2000 / planet.period) % TWO_PI;
+    let x = planet.radius * cos(angle);
+    let y = planet.radius * sin(angle);
+
+    // Draw planet
+    fill(...planet.color);
+    noStroke();
+    ellipse(x, y, planet.size, planet.size);
+
+    // Draw label
+    fill(255);
+    text(planet.name, x, y + planet.size + 12);
+  }
+}
+</script>
+</body>
+</html>
