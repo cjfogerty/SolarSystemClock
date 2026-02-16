@@ -5,12 +5,166 @@
   <title>Solar System Clock</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
-    body { margin: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; background: black; color: white; font-family: Arial, sans-serif; }
-    canvas { border: 1px solid #333; }
-    #controls { margin-bottom: 10px; }
-    #controls input { margin: 5px; padding: 5px; }
-    #controls button { padding: 5px 10px; }
-    #error { color: red; display: none; }
+    * { box-sizing: border-box; }
+    html, body {
+      margin: 0; padding: 0;
+      background: black;
+      color: white;
+      font-family: Arial, sans-serif;
+      height: 100%;
+      overflow: hidden;
+    }
+    #app {
+      display: flex;
+      flex-direction: row;
+      height: 100vh;
+      width: 100vw;
+    }
+    #sidebar {
+      width: 260px;
+      min-width: 220px;
+      max-width: 300px;
+      background: #111;
+      border-right: 1px solid #333;
+      display: flex;
+      flex-direction: column;
+      padding: 12px 10px;
+      overflow-y: auto;
+      flex-shrink: 0;
+    }
+    #main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      overflow: hidden;
+      position: relative;
+    }
+    #controls {
+      padding: 8px 12px;
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 6px;
+      background: #111;
+      border-bottom: 1px solid #333;
+      width: 100%;
+    }
+    #controls input { padding: 4px 6px; background: #222; color: white; border: 1px solid #555; border-radius: 3px; }
+    #controls button { padding: 4px 10px; background: #333; color: white; border: 1px solid #555; border-radius: 3px; cursor: pointer; }
+    #controls button:hover { background: #444; }
+    #error { color: #ff6060; font-size: 12px; width: 100%; }
+    #canvas-wrapper {
+      flex: 1;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      overflow: hidden;
+      position: relative;
+    }
+    #zoom-controls {
+      position: absolute;
+      bottom: 12px;
+      right: 12px;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      z-index: 10;
+    }
+    #zoom-controls button {
+      width: 32px; height: 32px;
+      background: #222; color: white;
+      border: 1px solid #555; border-radius: 4px;
+      cursor: pointer; font-size: 18px; line-height: 1;
+      display: flex; align-items: center; justify-content: center;
+    }
+    #zoom-controls button:hover { background: #444; }
+    #zoom-label {
+      text-align: center; font-size: 11px; color: #aaa;
+    }
+    /* Sidebar styles */
+    #sidebar h2 {
+      font-size: 14px;
+      color: #aaa;
+      margin: 0 0 8px 0;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    #sidebar h3 {
+      font-size: 13px;
+      color: #ccc;
+      margin: 14px 0 4px 0;
+    }
+    .sidebar-section {
+      border-top: 1px solid #333;
+      padding-top: 10px;
+      margin-top: 10px;
+    }
+    #alignment-tolerance {
+      display: flex; align-items: center; gap: 6px;
+      margin-bottom: 8px;
+    }
+    #alignment-tolerance label { font-size: 12px; color: #aaa; }
+    #tolerance-input {
+      width: 50px; padding: 3px 5px;
+      background: #222; color: white;
+      border: 1px solid #555; border-radius: 3px;
+      font-size: 12px;
+    }
+    #find-alignments-btn {
+      width: 100%;
+      padding: 6px;
+      background: #1a3a5c;
+      color: white;
+      border: 1px solid #2a6aac;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+    }
+    #find-alignments-btn:hover { background: #1e4a7a; }
+    #find-alignments-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+    #alignment-status {
+      font-size: 11px;
+      color: #888;
+      margin-top: 6px;
+      min-height: 16px;
+    }
+    #alignment-results {
+      margin-top: 8px;
+      font-size: 12px;
+    }
+    .alignment-item {
+      padding: 5px 7px;
+      margin-bottom: 4px;
+      background: #1a1a2e;
+      border: 1px solid #2a2a4e;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background 0.15s;
+    }
+    .alignment-item:hover { background: #22224a; }
+    .alignment-item .ali-date { color: #7ab3f0; font-weight: bold; }
+    .alignment-item .ali-delta { color: #888; font-size: 11px; }
+    .alignment-item .ali-score { color: #6db86d; font-size: 11px; }
+    #planet-angles {
+      font-size: 11px;
+      color: #888;
+    }
+    #planet-angles table { width: 100%; border-collapse: collapse; }
+    #planet-angles td { padding: 2px 4px; }
+    #planet-angles td:last-child { text-align: right; color: #aaa; }
+    .no-results { color: #666; font-size: 12px; font-style: italic; }
+    #search-range-row {
+      display: flex; gap: 6px; margin-bottom: 8px; align-items: center;
+    }
+    #search-range-row label { font-size: 11px; color: #aaa; white-space: nowrap; }
+    #search-range-input {
+      width: 55px; padding: 3px 5px;
+      background: #222; color: white;
+      border: 1px solid #555; border-radius: 3px;
+      font-size: 12px;
+    }
     #nav-controls { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; }
     #nav-controls label { font-size: 13px; }
     #dayStep { width: 60px; padding: 5px; text-align: center; }
@@ -18,83 +172,217 @@
   </style>
 </head>
 <body>
-  <div id="controls">
-    <label for="customDate">Select Date (Premium Feature):</label>
-    <input type="date" id="customDate" disabled>
-    <input type="time" id="customTime" disabled>
-    <button id="setDate" disabled>Set Date</button>
-    <button id="resetDate">Reset to Now</button>
-    <span id="nav-controls">
-      <button class="nav-arrow" id="navBack" title="Go back">&#8592;</button>
-      <label for="dayStep">Days:</label>
-      <input type="number" id="dayStep" value="1" min="1">
-      <button class="nav-arrow" id="navForward" title="Go forward">&#8594;</button>
-    </span>
-    <div id="error"></div>
+<div id="app">
+  <!-- SIDEBAR -->
+  <div id="sidebar">
+    <h2>Solar System Clock</h2>
+
+    <!-- Planet angles at current date -->
+    <div class="sidebar-section">
+      <h3>Planet Positions</h3>
+      <div id="planet-angles">
+        <table id="angles-table">
+          <tbody id="angles-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Similar alignments -->
+    <div class="sidebar-section">
+      <h3>Similar Alignments</h3>
+      <p style="font-size:11px;color:#888;margin:0 0 8px 0;">Find other dates where all planets are in similar positions (within tolerance).</p>
+
+      <div id="alignment-tolerance">
+        <label for="tolerance-input">Tolerance:</label>
+        <input type="number" id="tolerance-input" value="1" min="0.1" max="20" step="0.1">
+        <span style="font-size:11px;color:#888;">%</span>
+      </div>
+      <div id="search-range-row">
+        <label for="search-range-input">Search ±</label>
+        <input type="number" id="search-range-input" value="200" min="10" max="1000" step="10">
+        <span style="font-size:11px;color:#888;">years</span>
+      </div>
+
+      <button id="find-alignments-btn">Find Similar Dates</button>
+      <div id="alignment-status"></div>
+      <div id="alignment-results"></div>
+    </div>
   </div>
+
+  <!-- MAIN AREA -->
+  <div id="main">
+    <div id="controls">
+      <label for="customDate" style="font-size:13px;">Date:</label>
+      <input type="date" id="customDate" disabled>
+      <input type="time" id="customTime" disabled>
+      <button id="setDate" disabled>Set Date</button>
+      <button id="resetDate">Now</button>
+      <span id="nav-controls">
+          <button class="nav-arrow" id="navBack" title="Go back">&#8592;</button>
+          <label for="dayStep">Days:</label>
+          <input type="number" id="dayStep" value="1" min="1">
+          <button class="nav-arrow" id="navForward" title="Go forward">&#8594;</button>
+      </span>
+      <div id="error"></div>
+    </div>
+    <div id="canvas-wrapper">
+      <!-- p5 canvas inserted here -->
+      <div id="zoom-controls">
+        <button id="zoom-in-btn" title="Zoom In">+</button>
+        <div id="zoom-label">100%</div>
+        <button id="zoom-out-btn" title="Zoom Out">−</button>
+        <button id="zoom-fit-btn" title="Fit to window" style="font-size:12px;">⊡</button>
+      </div>
+    </div>
+  </div>
+</div>
+
 <script>
-let planets = [
-  { name: "Mercury", radius: 50, period: 88, color: [128, 128, 128], size: 10 },
-  { name: "Venus", radius: 90, period: 224.7, color: [255, 165, 0], size: 14 },
-  { name: "Earth", radius: 130, period: 365.25, color: [0, 0, 255], size: 14 },
-  { name: "Mars", radius: 170, period: 687, color: [255, 0, 0], size: 12 },
-  { name: "Jupiter", radius: 210, period: 4332.59, color: [255, 215, 0], size: 20 },
-  { name: "Saturn", radius: 250, period: 10759.22, color: [210, 180, 140], size: 18 },
-  { name: "Uranus", radius: 290, period: 30688.5, color: [0, 255, 255], size: 16 },
-  { name: "Neptune", radius: 330, period: 59800, color: [0, 0, 128], size: 16 }
+// ── Planet data ──────────────────────────────────────────────────────────────
+const planets = [
+  { name: "Mercury", radius: 50,  period: 88,       color: [128, 128, 128], size: 10 },
+  { name: "Venus",   radius: 90,  period: 224.7,    color: [255, 165,   0], size: 14 },
+  { name: "Earth",   radius: 130, period: 365.25,   color: [  0,   0, 255], size: 14 },
+  { name: "Mars",    radius: 170, period: 687,       color: [255,   0,   0], size: 12 },
+  { name: "Jupiter", radius: 210, period: 4332.59,  color: [255, 215,   0], size: 20 },
+  { name: "Saturn",  radius: 250, period: 10759.22, color: [210, 180, 140], size: 18 },
+  { name: "Uranus",  radius: 290, period: 30688.5,  color: [  0, 255, 255], size: 16 },
+  { name: "Neptune", radius: 330, period: 59800,    color: [  0,   0, 128], size: 16 }
 ];
 
-let isPremium = true; // Simulate premium access
+const CANVAS_SIZE = 750;   // logical canvas size (px)
+const J2000 = new Date(2000, 0, 1, 12, 0, 0);
+
+let isPremium = true;
 let customDaysSinceJ2000 = null;
+let currentZoom = 1.0;
+let p5Canvas = null;
 
-function setup() {
-  createCanvas(1000, 1000);
-  textAlign(CENTER, CENTER);
-  textSize(14);
+// ── Helpers ──────────────────────────────────────────────────────────────────
+function daysSinceJ2000FromDate(date) {
+  return (date - J2000) / (1000 * 60 * 60 * 24);
+}
 
-  // Enable inputs if premium
-  if (isPremium) {
-    document.getElementById('customDate').disabled = false;
-    document.getElementById('customTime').disabled = false;
-    document.getElementById('setDate').disabled = false;
-  }
+function getCurrentDays() {
+  if (customDaysSinceJ2000 !== null) return customDaysSinceJ2000;
+  return daysSinceJ2000FromDate(new Date());
+}
 
-  // Set date button handler
-  document.getElementById('setDate').addEventListener('click', () => {
-    let dateInput = document.getElementById('customDate').value;
-    let timeInput = document.getElementById('customTime').value;
-    let errorDiv = document.getElementById('error');
+/** Orbital fraction 0–1 for a planet given days since J2000 */
+function orbitalFraction(planet, days) {
+  return ((days / planet.period) % 1 + 1) % 1;
+}
 
-    if (!dateInput) {
-      errorDiv.style.display = 'block';
-      errorDiv.textContent = 'Please select a date.';
-      return;
-    }
+/** Angular difference on a circle [0,1], always 0–0.5 */
+function circularDiff(a, b) {
+  let d = Math.abs(a - b) % 1;
+  return d > 0.5 ? 1 - d : d;
+}
 
-    let [year, month, day] = dateInput.split('-').map(Number);
-    let [hours, minutes] = timeInput ? timeInput.split(':').map(Number) : [12, 0];
-
-    // Validate year (approx -1B years to now)
-    if (year < -999999998 || year > new Date().getFullYear()) {
-      errorDiv.style.display = 'block';
-      errorDiv.textContent = 'Year must be between -999,999,998 and present.';
-      return;
-    }
-
-    errorDiv.style.display = 'none';
-
-    // Calculate days since J2000
-    let j2000 = new Date(2000, 0, 1, 12, 0, 0);
-    let inputDate = new Date(year, month - 1, day, hours, minutes, 0);
-
-    // For very large year differences, approximate days
-    if (Math.abs(year - 2000) > 10000) {
-      let yearsDiff = year - 2000;
-      customDaysSinceJ2000 = yearsDiff * 365.25; // Approximate, ignoring leap years
-    } else {
-      customDaysSinceJ2000 = (inputDate - j2000) / (1000 * 60 * 60 * 24);
-    }
+// ── Zoom ─────────────────────────────────────────────────────────────────────
+function setZoom(z) {
+  z = Math.max(0.2, Math.min(3.0, z));
+  currentZoom = z;
+  const wrapper = document.getElementById('canvas-wrapper');
+  const canvases = wrapper.querySelectorAll('canvas');
+  canvases.forEach(c => {
+    c.style.transform = `scale(${z})`;
+    c.style.transformOrigin = 'center center';
   });
+  document.getElementById('zoom-label').textContent = Math.round(z * 100) + '%';
+}
+
+function computeFitZoom() {
+  const wrapper = document.getElementById('canvas-wrapper');
+  const ww = wrapper.clientWidth - 16;
+  const wh = wrapper.clientHeight - 16;
+  const fit = Math.min(ww / CANVAS_SIZE, wh / CANVAS_SIZE, 1.0);
+  return Math.max(0.3, fit);
+}
+
+function fitZoom() {
+  setZoom(computeFitZoom());
+}
+
+// ── Update planet angle table ─────────────────────────────────────────────────
+function updateAnglesTable() {
+  const days = getCurrentDays();
+  const tbody = document.getElementById('angles-tbody');
+  let html = '';
+  for (const p of planets) {
+    const frac = orbitalFraction(p, days);
+    const deg = (frac * 360).toFixed(1);
+    html += `<tr><td style="color:rgb(${p.color.join(',')})">● ${p.name}</td><td>${deg}°</td></tr>`;
+  }
+  tbody.innerHTML = html;
+}
+
+// ── Similar Alignments Search ─────────────────────────────────────────────────
+let searchWorker = null;
+let isSearching = false;
+
+function findSimilarAlignments() {
+  if (isSearching) return;
+
+  const refDays = getCurrentDays();
+  const tolerance = parseFloat(document.getElementById('tolerance-input').value) / 100;
+  const rangeYears = parseInt(document.getElementById('search-range-input').value, 10);
+
+  const btn = document.getElementById('find-alignments-btn');
+  const statusEl = document.getElementById('alignment-status');
+  const resultsEl = document.getElementById('alignment-results');
+
+  // Reference fractions
+  const refFracs = planets.map(p => orbitalFraction(p, refDays));
+
+  btn.disabled = true;
+  isSearching = true;
+  statusEl.textContent = 'Searching…';
+  resultsEl.innerHTML = '';
+
+  // Run async in chunks to avoid blocking UI
+  const startDays = refDays - rangeYears * 365.25;
+  const endDays   = refDays + rangeYears * 365.25;
+
+  // Step: check every ~30 days (monthly), then refine
+  const COARSE_STEP = 30;     // days
+  const REFINE_STEP = 1;      // days
+  const MERGE_GAP   = 60;     // days – merge nearby hits
+
+  const found = []; // { days, score }
+  let d = startDays;
+
+  function processChunk() {
+    const CHUNK = 2000; // iterations per chunk
+    let count = 0;
+    while (d <= endDays && count < CHUNK) {
+      // Skip the reference date window (±180 days)
+      if (Math.abs(d - refDays) > 180) {
+        let match = true;
+        let totalDiff = 0;
+        for (let i = 0; i < planets.length; i++) {
+          const frac = orbitalFraction(planets[i], d);
+          const diff = circularDiff(frac, refFracs[i]);
+          if (diff > tolerance) { match = false; break; }
+          totalDiff += diff;
+        }
+        if (match) {
+          found.push({ days: d, score: totalDiff / planets.length });
+        }
+      }
+      d += COARSE_STEP;
+      count++;
+    }
+
+    const pct = Math.round(((d - startDays) / (endDays - startDays)) * 100);
+    statusEl.textContent = `Searching… ${Math.min(pct, 100)}%`;
+
+    if (d <= endDays) {
+      requestAnimationFrame(processChunk);
+    } else {
+      finishSearch();
+    }
+  }
 
   // Reset to current time
   document.getElementById('resetDate').addEventListener('click', () => {
@@ -133,47 +421,202 @@ function setup() {
 
   document.getElementById('navBack').addEventListener('click', () => navigateDays(-1));
   document.getElementById('navForward').addEventListener('click', () => navigateDays(1));
-}
+  function finishSearch() {
+    // Merge nearby results, keep best score per cluster
+    const merged = [];
+    for (const hit of found) {
+      const last = merged[merged.length - 1];
+      if (last && Math.abs(hit.days - last.days) < MERGE_GAP) {
+        if (hit.score < last.score) {
+          merged[merged.length - 1] = hit;
+        }
+      } else {
+        merged.push({ ...hit });
+      }
+    }
 
-function draw() {
-  background(0);
-  translate(width / 2, height / 2);
+    // Sort by proximity to reference date
+    merged.sort((a, b) => Math.abs(a.days - refDays) - Math.abs(b.days - refDays));
 
-  // Draw Sun
-  fill(255, 255, 0);
-  noStroke();
-  ellipse(0, 0, 30, 30);
-
-  // Use custom date or current time
-  let daysSinceJ2000 = customDaysSinceJ2000;
-  if (daysSinceJ2000 === null) {
-    let now = new Date();
-    let j2000 = new Date(2000, 0, 1, 12, 0, 0);
-    daysSinceJ2000 = (now - j2000) / (1000 * 60 * 60 * 24);
+    renderResults(merged, refDays);
+    btn.disabled = false;
+    isSearching = false;
+    statusEl.textContent = merged.length
+      ? `Found ${merged.length} match${merged.length !== 1 ? 'es' : ''}.`
+      : 'No matches found. Try increasing tolerance or range.';
   }
 
-  // Draw orbits and planets
-  for (let planet of planets) {
-    // Draw orbit
-    noFill();
-    stroke(255, 50);
-    ellipse(0, 0, planet.radius * 2, planet.radius * 2);
-
-    // Calculate planet position
-    let angle = (TWO_PI * daysSinceJ2000 / planet.period) % TWO_PI;
-    let x = planet.radius * cos(angle);
-    let y = planet.radius * sin(angle);
-
-    // Draw planet
-    fill(...planet.color);
-    noStroke();
-    ellipse(x, y, planet.size, planet.size);
-
-    // Draw label
-    fill(255);
-    text(planet.name, x, y + planet.size + 12);
-  }
+  requestAnimationFrame(processChunk);
 }
+
+function daysToDate(days) {
+  const ms = days * 24 * 60 * 60 * 1000;
+  const date = new Date(J2000.getTime() + ms);
+  return date;
+}
+
+function renderResults(results, refDays) {
+  const el = document.getElementById('alignment-results');
+  if (!results.length) {
+    el.innerHTML = '<div class="no-results">No similar dates found.</div>';
+    return;
+  }
+
+  let html = '';
+  for (const hit of results.slice(0, 30)) {
+    const date = daysToDate(hit.days);
+    const deltaYears = ((hit.days - refDays) / 365.25).toFixed(1);
+    const sign = deltaYears >= 0 ? '+' : '';
+    let dateStr;
+    const yr = date.getFullYear();
+    if (yr < 1 || yr > 9999) {
+      dateStr = `Year ${yr}`;
+    } else {
+      dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+    }
+    const scoreStr = (hit.score * 100).toFixed(2) + '% avg diff';
+    html += `
+      <div class="alignment-item" data-days="${hit.days}" title="Jump to this date">
+        <div class="ali-date">${dateStr}</div>
+        <div class="ali-delta">${sign}${deltaYears} years</div>
+        <div class="ali-score">${scoreStr}</div>
+      </div>`;
+  }
+  if (results.length > 30) {
+    html += `<div class="no-results">…and ${results.length - 30} more.</div>`;
+  }
+  el.innerHTML = html;
+
+  // Click handlers: jump to that date
+  el.querySelectorAll('.alignment-item').forEach(item => {
+    item.addEventListener('click', () => {
+      const days = parseFloat(item.dataset.days);
+      customDaysSinceJ2000 = days;
+      const date = daysToDate(days);
+      // Update input fields if in valid range
+      try {
+        const yr = date.getFullYear();
+        if (yr >= 1 && yr <= 9999) {
+          document.getElementById('customDate').value = date.toISOString().slice(0, 10);
+          document.getElementById('customTime').value = '12:00';
+        }
+      } catch(e) {}
+      updateAnglesTable();
+    });
+  });
+}
+
+// ── p5.js sketch ─────────────────────────────────────────────────────────────
+new p5(function(p) {
+  p.setup = function() {
+    p5Canvas = p.createCanvas(CANVAS_SIZE, CANVAS_SIZE);
+    p5Canvas.parent('canvas-wrapper');
+    p.textAlign(p.CENTER, p.CENTER);
+    p.textSize(12);
+
+    // Apply CSS so canvas doesn't force layout overflow
+    const c = p5Canvas.elt;
+    c.style.display = 'block';
+    c.style.flexShrink = '0';
+
+    if (isPremium) {
+      document.getElementById('customDate').disabled = false;
+      document.getElementById('customTime').disabled = false;
+      document.getElementById('setDate').disabled = false;
+    }
+
+    // Set Date
+    document.getElementById('setDate').addEventListener('click', () => {
+      const dateInput = document.getElementById('customDate').value;
+      const timeInput = document.getElementById('customTime').value;
+      const errorDiv  = document.getElementById('error');
+
+      if (!dateInput) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Please select a date.';
+        return;
+      }
+
+      const [year, month, day] = dateInput.split('-').map(Number);
+      const [hours, minutes]   = timeInput ? timeInput.split(':').map(Number) : [12, 0];
+
+      if (year < -999999998 || year > new Date().getFullYear()) {
+        errorDiv.style.display = 'block';
+        errorDiv.textContent = 'Year must be between -999,999,998 and present.';
+        return;
+      }
+      errorDiv.style.display = 'none';
+
+      if (Math.abs(year - 2000) > 10000) {
+        customDaysSinceJ2000 = (year - 2000) * 365.25;
+      } else {
+        const inputDate = new Date(year, month - 1, day, hours, minutes, 0);
+        customDaysSinceJ2000 = daysSinceJ2000FromDate(inputDate);
+      }
+      updateAnglesTable();
+    });
+
+    // Reset
+    document.getElementById('resetDate').addEventListener('click', () => {
+      customDaysSinceJ2000 = null;
+      document.getElementById('customDate').value = '';
+      document.getElementById('customTime').value = '';
+      document.getElementById('error').style.display = 'none';
+      updateAnglesTable();
+    });
+
+    // Zoom controls
+    document.getElementById('zoom-in-btn').addEventListener('click',  () => setZoom(currentZoom + 0.1));
+    document.getElementById('zoom-out-btn').addEventListener('click', () => setZoom(currentZoom - 0.1));
+    document.getElementById('zoom-fit-btn').addEventListener('click', fitZoom);
+
+    // Find alignments
+    document.getElementById('find-alignments-btn').addEventListener('click', findSimilarAlignments);
+
+    // Initial fit after layout settles
+    setTimeout(() => {
+      fitZoom();
+      updateAnglesTable();
+    }, 80);
+
+    // Re-fit on resize
+    window.addEventListener('resize', fitZoom);
+  };
+
+  p.draw = function() {
+    p.background(0);
+    p.translate(CANVAS_SIZE / 2, CANVAS_SIZE / 2);
+
+    // Sun
+    p.fill(255, 255, 0);
+    p.noStroke();
+    p.ellipse(0, 0, 30, 30);
+
+    const days = getCurrentDays();
+
+    for (const planet of planets) {
+      // Orbit ring
+      p.noFill();
+      p.stroke(255, 50);
+      p.ellipse(0, 0, planet.radius * 2, planet.radius * 2);
+
+      // Planet position
+      const angle = (p.TWO_PI * days / planet.period) % p.TWO_PI;
+      const x = planet.radius * p.cos(angle);
+      const y = planet.radius * p.sin(angle);
+
+      // Planet
+      p.fill(...planet.color);
+      p.noStroke();
+      p.ellipse(x, y, planet.size, planet.size);
+
+      // Label
+      p.fill(255);
+      p.textSize(11);
+      p.text(planet.name, x, y + planet.size + 10);
+    }
+  };
+});
 </script>
 </body>
 </html>
