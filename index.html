@@ -6,616 +6,1417 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
     * { box-sizing: border-box; }
-    html, body {
-      margin: 0; padding: 0;
-      background: black;
-      color: white;
-      font-family: Arial, sans-serif;
-      height: 100%;
-      overflow: hidden;
-    }
-    #app {
+    body {
+      margin: 0;
       display: flex;
       flex-direction: row;
-      height: 100vh;
-      width: 100vw;
-    }
-    #sidebar {
-      width: 260px;
-      min-width: 220px;
-      max-width: 300px;
-      background: #111;
-      border-right: 1px solid #333;
-      display: flex;
-      flex-direction: column;
-      padding: 12px 10px;
-      overflow-y: auto;
-      flex-shrink: 0;
-    }
-    #main {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      overflow: hidden;
-      position: relative;
-    }
-    #controls {
-      padding: 8px 12px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 6px;
-      background: #111;
-      border-bottom: 1px solid #333;
-      width: 100%;
-    }
-    #controls input { padding: 4px 6px; background: #222; color: white; border: 1px solid #555; border-radius: 3px; }
-    #controls button { padding: 4px 10px; background: #333; color: white; border: 1px solid #555; border-radius: 3px; cursor: pointer; }
-    #controls button:hover { background: #444; }
-    #error { color: #ff6060; font-size: 12px; width: 100%; }
-    #canvas-wrapper {
-      flex: 1;
-      display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: center;
-      overflow: hidden;
-      position: relative;
+      min-height: 100vh;
+      background: #060608;
+      color: white;
+      font-family: 'Georgia', serif;
+      gap: 8px;
+      padding: 10px;
     }
-    #zoom-controls {
-      position: absolute;
-      bottom: 12px;
-      right: 12px;
+
+    #sidebar {
+      width: 270px;
+      flex-shrink: 0;
       display: flex;
       flex-direction: column;
-      gap: 4px;
-      z-index: 10;
+      gap: 10px;
     }
-    #zoom-controls button {
-      width: 32px; height: 32px;
-      background: #222; color: white;
-      border: 1px solid #555; border-radius: 4px;
-      cursor: pointer; font-size: 18px; line-height: 1;
-      display: flex; align-items: center; justify-content: center;
+
+    .panel {
+      background: linear-gradient(160deg, #0e0e14 0%, #0a0a10 100%);
+      border: 1px solid #1e1e2e;
+      border-radius: 10px;
+      padding: 11px 13px;
+      box-shadow: 0 2px 12px rgba(0,0,0,0.4);
     }
-    #zoom-controls button:hover { background: #444; }
-    #zoom-label {
-      text-align: center; font-size: 11px; color: #aaa;
-    }
-    /* Sidebar styles */
-    #sidebar h2 {
-      font-size: 14px;
-      color: #aaa;
-      margin: 0 0 8px 0;
+
+    .panel h3 {
+      margin: 0 0 9px 0;
+      font-size: 10px;
       text-transform: uppercase;
-      letter-spacing: 1px;
+      letter-spacing: 0.14em;
+      color: #556;
+      border-bottom: 1px solid #161622;
+      padding-bottom: 6px;
+      font-family: Arial, sans-serif;
     }
-    #sidebar h3 {
-      font-size: 13px;
-      color: #ccc;
-      margin: 14px 0 4px 0;
+
+    .date-row .inputs { display: flex; gap: 6px; margin-bottom: 6px; }
+
+    input[type="date"], input[type="time"] {
+      background: #0d0d16; border: 1px solid #252535; color: #aab;
+      padding: 5px 6px; border-radius: 5px; font-size: 12px; font-family: Arial, sans-serif;
     }
-    .sidebar-section {
-      border-top: 1px solid #333;
-      padding-top: 10px;
-      margin-top: 10px;
+    input[type="date"] { flex: 2; }
+    input[type="time"] { flex: 1; }
+
+    .btn-row { display: flex; gap: 6px; }
+
+    button {
+      background: #0f0f1a; border: 1px solid #252535; color: #99a;
+      padding: 5px 8px; border-radius: 5px; cursor: pointer; font-size: 11px; flex: 1;
+      font-family: Arial, sans-serif; transition: all 0.15s;
     }
-    #alignment-tolerance {
-      display: flex; align-items: center; gap: 6px;
-      margin-bottom: 8px;
+    button:hover { background: #181828; border-color: #3a3a5a; color: #ccf; }
+
+    /* Nav arrows */
+    .nav-row { display: flex; gap: 4px; margin-top: 6px; align-items: center; }
+    .nav-row label { font-size: 10px; color: #445; flex: 1; text-align: center; font-family: Arial, sans-serif; }
+    .nav-btn {
+      background: #0d0d1a; border: 1px solid #252535; color: #778;
+      padding: 4px 0; border-radius: 5px; cursor: pointer; font-size: 13px;
+      flex: 1; text-align: center; line-height: 1; transition: all 0.15s;
     }
-    #alignment-tolerance label { font-size: 12px; color: #aaa; }
-    #tolerance-input {
-      width: 50px; padding: 3px 5px;
-      background: #222; color: white;
-      border: 1px solid #555; border-radius: 3px;
-      font-size: 12px;
+    .nav-btn:hover { background: #151525; color: #aac; border-color: #3a3a5a; }
+    .nav-step { display: flex; gap: 4px; margin-top: 3px; }
+    .nav-step button { font-size: 10px; padding: 3px 0; flex: 1; color: #556; background: #0a0a14; border-color: #1a1a28; }
+    .nav-step button:hover { color: #99f; background: #111120; }
+
+    .err { color: #f87; font-size: 11px; display: none; margin-top: 4px; font-family: Arial, sans-serif; }
+
+    /* Planet rows */
+    .planet-row {
+      display: flex; align-items: center; gap: 7px;
+      margin-bottom: 7px; padding-bottom: 7px;
+      border-bottom: 1px solid #111118;
     }
-    #find-alignments-btn {
-      width: 100%;
-      padding: 6px;
-      background: #1a3a5c;
-      color: white;
-      border: 1px solid #2a6aac;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 12px;
+    .planet-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .pdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .planet-row label { font-size: 12px; flex: 1; cursor: pointer; color: #99a; font-family: Arial, sans-serif; }
+    .planet-row input[type="checkbox"] { cursor: pointer; accent-color: #66f; flex-shrink: 0; }
+    .tol-wrap { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
+    input[type="range"] { width: 60px; cursor: pointer; accent-color: #66f; }
+    .tol-val { font-size: 11px; color: #556; width: 32px; text-align: right; font-family: Arial, sans-serif; }
+
+    /* Alignment status */
+    .astat { font-size: 12px; line-height: 1.8; font-family: Arial, sans-serif; }
+    .astat .ok  { color: #5f5; }
+    .astat .no  { color: #334; }
+
+    /* Similar dates */
+    #similarList { max-height: 155px; overflow-y: auto; font-size: 12px; scrollbar-width: thin; scrollbar-color: #222 #0a0a14; }
+    .sim-item { padding: 4px 6px; border-radius: 5px; cursor: pointer; border: 1px solid #181822; margin-bottom: 3px; transition: all 0.15s; }
+    .sim-item:hover { background: #0f1f10; border-color: #2a4a2a; }
+    .sim-item .sim-date { color: #8bf; font-weight: bold; font-family: Arial, sans-serif; }
+    .sim-item .sim-detail { color: #445; font-size: 10px; font-family: Arial, sans-serif; }
+    #simScanBtn { width: 100%; margin-bottom: 8px; }
+    #simStatus { font-size: 11px; color: #445; margin-bottom: 6px; font-family: Arial, sans-serif; }
+    .scan-dir-btn { flex:1; }
+    .active-dir { border-color:#3a3a6a !important; color:#aaf !important; background:#12122a !important; }
+
+    #canvas-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; }
+    canvas { border-radius: 6px; display: block; }
+
+    /* Accordion */
+    .accordion-panel { }
+    .accordion-header {
+      display: flex; align-items: center; justify-content: space-between;
+      cursor: pointer; user-select: none; margin: 0;
+      padding-bottom: 0;
+      border-bottom: none;
     }
-    #find-alignments-btn:hover { background: #1e4a7a; }
-    #find-alignments-btn:disabled { opacity: 0.5; cursor: not-allowed; }
-    #alignment-status {
-      font-size: 11px;
-      color: #888;
-      margin-top: 6px;
-      min-height: 16px;
+    .accordion-header:hover .accordion-title { color: #99a; }
+    .accordion-title {
+      font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
+      color: #556; font-family: Arial, sans-serif; transition: color 0.15s;
     }
-    #alignment-results {
-      margin-top: 8px;
-      font-size: 12px;
+    .accordion-arrow {
+      font-size: 9px; color: #445; transition: transform 0.2s; display: inline-block;
     }
-    .alignment-item {
-      padding: 5px 7px;
-      margin-bottom: 4px;
-      background: #1a1a2e;
-      border: 1px solid #2a2a4e;
-      border-radius: 4px;
-      cursor: pointer;
-      transition: background 0.15s;
+    .accordion-arrow.open { transform: rotate(90deg); }
+    .accordion-body {
+      overflow: hidden; max-height: 0; transition: max-height 0.25s ease;
     }
-    .alignment-item:hover { background: #22224a; }
-    .alignment-item .ali-date { color: #7ab3f0; font-weight: bold; }
-    .alignment-item .ali-delta { color: #888; font-size: 11px; }
-    .alignment-item .ali-score { color: #6db86d; font-size: 11px; }
-    #planet-angles {
-      font-size: 11px;
-      color: #888;
+    .accordion-body.open { max-height: 2000px; }
+    .accordion-section { margin-top: 10px; padding-top: 10px; border-top: 1px solid #161622; }
+
+    /* Saved Dates */
+    #savedList { max-height: 180px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #222 #0a0a14; margin-bottom: 8px; }
+    .saved-item {
+      display: flex; align-items: center; gap: 5px;
+      padding: 5px 6px; border-radius: 5px; border: 1px solid #181822;
+      margin-bottom: 4px; background: #08080f;
     }
-    #planet-angles table { width: 100%; border-collapse: collapse; }
-    #planet-angles td { padding: 2px 4px; }
-    #planet-angles td:last-child { text-align: right; color: #aaa; }
-    .no-results { color: #666; font-size: 12px; font-style: italic; }
-    #search-range-row {
-      display: flex; gap: 6px; margin-bottom: 8px; align-items: center;
+    .saved-item-info { flex: 1; min-width: 0; }
+    .saved-item-title { font-size: 11px; color: #aab; font-family: Arial, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .saved-item-date  { font-size: 10px; color: #445; font-family: Arial, sans-serif; }
+    .saved-item-btns  { display: flex; gap: 3px; flex-shrink: 0; }
+    .saved-item-btns button {
+      font-size: 9px; padding: 2px 5px; flex: none; color: #556;
+      background: #0a0a14; border-color: #1a1a28; border-radius: 4px;
     }
-    #search-range-row label { font-size: 11px; color: #aaa; white-space: nowrap; }
-    #search-range-input {
-      width: 55px; padding: 3px 5px;
-      background: #222; color: white;
-      border: 1px solid #555; border-radius: 3px;
-      font-size: 12px;
+    .saved-item-btns button:hover { color: #99f; border-color: #3a3a5a; background: #111120; }
+    .saved-item-btns .del-btn:hover { color: #f66; border-color: #5a2020; }
+    .save-row { display: flex; gap: 5px; margin-top: 6px; }
+    .save-row input[type="text"] {
+      flex: 1; background: #0d0d16; border: 1px solid #252535; color: #aab;
+      padding: 4px 7px; border-radius: 5px; font-size: 11px; font-family: Arial, sans-serif;
     }
-    #nav-controls { display: inline-flex; align-items: center; gap: 4px; margin-left: 8px; }
-    #nav-controls label { font-size: 13px; }
-    #dayStep { width: 60px; padding: 5px; text-align: center; }
-    .nav-arrow { font-size: 18px; padding: 4px 10px; cursor: pointer; }
+    .save-row input[type="text"]::placeholder { color: #334; }
+    #saveCurrentBtn { flex: none; font-size: 10px; padding: 4px 8px; }
+
+    /* Historic Events */
+    .hist-group-label {
+      font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
+      color: #445; font-family: Arial, sans-serif;
+      margin: 8px 0 4px 0; padding-bottom: 3px;
+      border-bottom: 1px solid #111118;
+    }
+    .hist-item {
+      display: flex; align-items: center; gap: 5px;
+      padding: 4px 5px; border-radius: 4px; margin-bottom: 3px;
+      border: 1px solid transparent;
+      transition: border-color 0.12s;
+    }
+    .hist-item:hover { border-color: #1e1e2e; background: #08080f; }
+    .hist-item-info { flex: 1; min-width: 0; }
+    .hist-item-title { font-size: 11px; color: #99a; font-family: Arial, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hist-item-date  { font-size: 9px; color: #445; font-family: Arial, sans-serif; }
+    .hist-item-btns  { display: flex; gap: 3px; flex-shrink: 0; }
+    .hist-item-btns button {
+      font-size: 9px; padding: 2px 5px; flex: none; color: #556;
+      background: #0a0a14; border: 1px solid #1a1a28; border-radius: 4px; cursor: pointer;
+    }
+    .hist-item-btns button:hover { color: #99f; border-color: #3a3a5a; background: #111120; }
+    #histList { max-height: 240px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #222 #0a0a14; }
+    #histSearch {
+      width: 100%; background: #0d0d16; border: 1px solid #252535; color: #aab;
+      padding: 4px 7px; border-radius: 5px; font-size: 11px; font-family: Arial, sans-serif;
+      margin-bottom: 7px; box-sizing: border-box;
+    }
+    #histSearch::placeholder { color: #334; }
   </style>
 </head>
 <body>
-<div id="app">
-  <!-- SIDEBAR -->
-  <div id="sidebar">
-    <h2>Solar System Clock</h2>
 
-    <!-- Planet angles at current date -->
-    <div class="sidebar-section">
-      <h3>Planet Positions</h3>
-      <div id="planet-angles">
-        <table id="angles-table">
-          <tbody id="angles-tbody"></tbody>
-        </table>
+<div id="sidebar">
+
+  <div class="panel">
+    <h3>&#9679; Primary Date</h3>
+    <div class="date-row">
+      <div class="inputs">
+        <input type="date" id="customDate">
+        <input type="time" id="customTime">
       </div>
     </div>
-
-    <!-- Similar alignments -->
-    <div class="sidebar-section">
-      <h3>Similar Alignments</h3>
-      <p style="font-size:11px;color:#888;margin:0 0 8px 0;">Find other dates where all planets are in similar positions (within tolerance).</p>
-
-      <div id="alignment-tolerance">
-        <label for="tolerance-input">Tolerance:</label>
-        <input type="number" id="tolerance-input" value="1" min="0.1" max="20" step="0.1">
-        <span style="font-size:11px;color:#888;">%</span>
-      </div>
-      <div id="search-range-row">
-        <label for="search-range-input">Search ±</label>
-        <input type="number" id="search-range-input" value="200" min="10" max="1000" step="10">
-        <span style="font-size:11px;color:#888;">years</span>
-      </div>
-
-      <button id="find-alignments-btn">Find Similar Dates</button>
-      <div id="alignment-status"></div>
-      <div id="alignment-results"></div>
+    <div class="btn-row">
+      <button id="setDate">Set Date</button>
+      <button id="resetDate">Reset to Now</button>
+    </div>
+    <div class="err" id="error"></div>
+    <div class="nav-row" style="margin-top:8px;">
+      <button class="nav-btn" id="navBack">&#9664;</button>
+      <label id="navStepLabel">1 day</label>
+      <button class="nav-btn" id="navFwd">&#9654;</button>
+    </div>
+    <div class="nav-step">
+      <button data-step="1">Day</button>
+      <button data-step="7">Week</button>
+      <button data-step="30">Month</button>
+      <button data-step="365">Year</button>
     </div>
   </div>
 
-  <!-- MAIN AREA -->
-  <div id="main">
-    <div id="controls">
-      <label for="customDate" style="font-size:13px;">Date:</label>
-      <input type="date" id="customDate" disabled>
-      <input type="time" id="customTime" disabled>
-      <button id="setDate" disabled>Set Date</button>
-      <button id="resetDate">Now</button>
-      <span id="nav-controls">
-          <button class="nav-arrow" id="navBack" title="Go back">&#8592;</button>
-          <label for="dayStep">Days:</label>
-          <input type="number" id="dayStep" value="1" min="1">
-          <button class="nav-arrow" id="navForward" title="Go forward">&#8594;</button>
-      </span>
-      <div id="error"></div>
+  <div class="panel">
+    <h3>&#9675; Compare Date</h3>
+    <div class="date-row">
+      <div class="inputs">
+        <input type="date" id="compareDate">
+        <input type="time" id="compareTime">
+      </div>
     </div>
-    <div id="canvas-wrapper">
-      <!-- p5 canvas inserted here -->
-      <div id="zoom-controls">
-        <button id="zoom-in-btn" title="Zoom In">+</button>
-        <div id="zoom-label">100%</div>
-        <button id="zoom-out-btn" title="Zoom Out">−</button>
-        <button id="zoom-fit-btn" title="Fit to window" style="font-size:12px;">⊡</button>
+    <div class="btn-row">
+      <button id="setCompare">Set Compare</button>
+      <button id="clearCompare">Clear</button>
+    </div>
+    <div class="err" id="error2"></div>
+    <div id="compareNote" style="font-size:11px;color:#445;margin-top:5px;display:none;font-family:Arial,sans-serif;">Faded = compare date</div>
+  </div>
+
+  <!-- Saved Dates -->
+  <div class="panel">
+    <h3>&#9733; Saved Dates</h3>
+    <div id="savedList"></div>
+    <div class="save-row">
+      <input type="text" id="saveName" placeholder="Label (e.g. My Birthday)">
+      <button id="saveCurrentBtn">Save</button>
+    </div>
+    <div style="font-size:10px;color:#334;margin-top:5px;font-family:Arial,sans-serif;" id="saveMsg"></div>
+  </div>
+
+  <!-- Historic Events accordion -->
+  <div class="panel accordion-panel">
+    <div class="accordion-header" id="histHeader">
+      <span class="accordion-title">&#9790; Historic Events</span>
+      <span class="accordion-arrow" id="histArrow">&#9658;</span>
+    </div>
+    <div class="accordion-body" id="histBody">
+      <div class="accordion-section" style="padding-top:8px;">
+        <input type="text" id="histSearch" placeholder="Search events…">
+        <div id="histList"></div>
       </div>
     </div>
   </div>
+
+  <!-- Accordion: Similar Alignments + Settings + Status -->
+  <div class="panel accordion-panel">
+    <div class="accordion-header" id="accordionHeader">
+      <span class="accordion-title">&#9880; Alignments &amp; Analysis</span>
+      <span class="accordion-arrow" id="accordionArrow">&#9658;</span>
+    </div>
+    <div class="accordion-body" id="accordionBody">
+
+      <!-- Similar Alignments -->
+      <div class="accordion-section">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#556;margin-bottom:8px;font-family:Arial,sans-serif;">Similar Alignments</div>
+        <div style="display:flex;gap:5px;margin-bottom:7px;">
+          <button class="scan-dir-btn active-dir" data-dir="both" style="font-size:10px;padding:4px 0;">⇄ Both</button>
+          <button class="scan-dir-btn" data-dir="past" style="font-size:10px;padding:4px 0;">◀ Past</button>
+          <button class="scan-dir-btn" data-dir="future" style="font-size:10px;padding:4px 0;">Future ▶</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+          <label style="font-size:10px;color:#445;font-family:Arial,sans-serif;white-space:nowrap;">Range:</label>
+          <select id="scanRange" style="flex:1;background:#0a0a14;border:1px solid #1e1e2e;color:#88a;font-size:11px;padding:3px 5px;border-radius:4px;font-family:Arial,sans-serif;">
+            <option value="100">± 100 years</option>
+            <option value="1000">± 1,000 years</option>
+            <option value="10000">± 10,000 years</option>
+            <option value="100000">± 100,000 years</option>
+            <option value="1000000">± 1 million years</option>
+            <option value="100000000">± 100 million years</option>
+            <option value="1000000000">± 1 billion years</option>
+            <option value="4600000000">± 4.6 billion years</option>
+          </select>
+        </div>
+        <button id="simScanBtn" style="width:100%;margin-bottom:8px;">Scan Alignments</button>
+        <div id="simStatus" style="font-size:11px;color:#445;margin-bottom:6px;font-family:Arial,sans-serif;">Set direction &amp; range, then scan.</div>
+        <div id="similarList"></div>
+      </div>
+
+      <!-- Alignment Settings -->
+      <div class="accordion-section">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#556;margin-bottom:6px;font-family:Arial,sans-serif;">Alignment Settings</div>
+        <div style="font-size:10px;color:#445;margin-bottom:8px;font-family:Arial,sans-serif;">Tolerance = % closeness required (100% = exact)</div>
+        <div id="planetControls"></div>
+      </div>
+
+      <!-- Alignment Status -->
+      <div class="accordion-section">
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#556;margin-bottom:6px;font-family:Arial,sans-serif;">Alignment Status</div>
+        <div id="alignmentStatus" class="astat">—</div>
+      </div>
+
+    </div>
+  </div>
+
 </div>
 
+<div id="canvas-wrap"></div>
+
 <script>
-// ── Planet data ──────────────────────────────────────────────────────────────
-const planets = [
-  { name: "Mercury", radius: 50,  period: 88,       color: [128, 128, 128], size: 10 },
-  { name: "Venus",   radius: 90,  period: 224.7,    color: [255, 165,   0], size: 14 },
-  { name: "Earth",   radius: 130, period: 365.25,   color: [  0,   0, 255], size: 14 },
-  { name: "Mars",    radius: 170, period: 687,       color: [255,   0,   0], size: 12 },
-  { name: "Jupiter", radius: 210, period: 4332.59,  color: [255, 215,   0], size: 20 },
-  { name: "Saturn",  radius: 250, period: 10759.22, color: [210, 180, 140], size: 18 },
-  { name: "Uranus",  radius: 290, period: 30688.5,  color: [  0, 255, 255], size: 16 },
-  { name: "Neptune", radius: 330, period: 59800,    color: [  0,   0, 128], size: 16 }
+// ─── Planet data ────────────────────────────────────────────────────────────
+const PLANETS = [
+  { name: "Mercury", radius: 62,  period: 88,       color: [180,175,170], size: 8,  glowColor: [210,205,200] },
+  { name: "Venus",   radius: 104, period: 224.7,    color: [255,210,120], size: 13, glowColor: [255,235,165] },
+  { name: "Earth",   radius: 150, period: 365.25,   color: [ 70,140,255], size: 13, glowColor: [110,190,255] },
+  { name: "Mars",    radius: 196, period: 687,       color: [220, 80, 50], size: 11, glowColor: [255,125, 85] },
+  { name: "Jupiter", radius: 248, period: 4332.59,  color: [230,190,120], size: 22, glowColor: [255,215,155] },
+  { name: "Saturn",  radius: 300, period: 10759.22, color: [210,185,140], size: 19, glowColor: [235,210,165] },
+  { name: "Uranus",  radius: 346, period: 30688.5,  color: [100,230,220], size: 15, glowColor: [145,255,248] },
+  { name: "Neptune", radius: 388, period: 59800,    color: [ 80,100,230], size: 15, glowColor: [105,135,255] }
 ];
 
-const CANVAS_SIZE = 750;   // logical canvas size (px)
-const J2000 = new Date(2000, 0, 1, 12, 0, 0);
+// Orbit ring colors — subtle tint per planet
+const ORBIT_COLORS = [
+  [160,155,150], // Mercury
+  [200,160, 80], // Venus
+  [ 50,100,200], // Earth
+  [180, 60, 40], // Mars
+  [180,140, 80], // Jupiter
+  [170,150,110], // Saturn
+  [ 60,180,170], // Uranus
+  [ 50, 70,180], // Neptune
+];
 
-let isPremium = true;
+const EPOCH_LONG = {
+  Mercury: 252.25, Venus: 181.98, Earth: 100.46,
+  Mars: 355.45, Jupiter: 34.40, Saturn: 49.94,
+  Uranus: 313.23, Neptune: 304.88
+};
+
+// ─── State ──────────────────────────────────────────────────────────────────
 let customDaysSinceJ2000 = null;
-let currentZoom = 1.0;
-let p5Canvas = null;
+let compareDaysSinceJ2000 = null;
+let planetSettings = {};
+PLANETS.forEach(p => { planetSettings[p.name] = { enabled: true, tolerance: 80 }; });
 
-// ── Helpers ──────────────────────────────────────────────────────────────────
-function daysSinceJ2000FromDate(date) {
-  return (date - J2000) / (1000 * 60 * 60 * 24);
+// ─── Math helpers ────────────────────────────────────────────────────────────
+function J2000() { return new Date(2000, 0, 1, 12, 0, 0); }
+function daysFromDate(year, month, day, h=12, m=0) {
+  return (new Date(year, month-1, day, h, m, 0) - J2000()) / 86400000;
+}
+function nowDays() { return (new Date() - J2000()) / 86400000; }
+
+function helioLong(days, planet) {
+  const L0 = EPOCH_LONG[planet.name] || 0;
+  // For large |days|, (360/period)*days loses float precision in a single multiply.
+  // Fix: reduce days modulo the orbital period first, keeping only the fractional orbit.
+  // This keeps numbers small and % 360 accurate.
+  const period = planet.period;
+  const dReduced = days - Math.trunc(days / period) * period; // days mod period, float-safe
+  return ((L0 + (360 / period) * dReduced) % 360 + 360) % 360;
+}
+function angDiff(a, b) {
+  let d = Math.abs(a - b) % 360;
+  return d > 180 ? 360 - d : d;
+}
+function closenessPct(diffDeg) { return Math.max(0, 100 - (diffDeg / 180) * 100); }
+function getPrimaryDays() { return customDaysSinceJ2000 !== null ? customDaysSinceJ2000 : nowDays(); }
+
+function getCanvasRotationOffset(primaryDays) {
+  // For extreme ancient/future dates JS Date overflows — derive Jan 1 purely from days arithmetic.
+  // Year = floor(primaryDays / 365.25) + 2000 (approximate, good enough for rotation offset)
+  let jan1Days;
+  const absYr = Math.abs(primaryDays / 365.25);
+  if (absYr < 100000) {
+    // Within JS Date range — use exact calendar calc
+    const d = new Date(J2000().getTime() + primaryDays * 86400000);
+    jan1Days = daysFromDate(d.getFullYear(), 1, 1);
+  } else {
+    // Outside JS Date range — approximate Jan 1 as the start of the fractional year
+    const approxYear = primaryDays / 365.25; // fractional years from J2000
+    jan1Days = Math.floor(approxYear) * 365.25; // Jan 1 of that year in days from J2000
+  }
+  const earthRawAtJan1 = (Math.PI * 2 * jan1Days) / PLANETS[2].period;
+  return -Math.PI / 2 - earthRawAtJan1;
+}
+function drawAngle(days, planet, rotOffset) {
+  return (Math.PI * 2 * days) / planet.period + rotOffset;
 }
 
-function getCurrentDays() {
-  if (customDaysSinceJ2000 !== null) return customDaysSinceJ2000;
-  return daysSinceJ2000FromDate(new Date());
+// ─── UI helpers ──────────────────────────────────────────────────────────────
+function daysToDateStr(days) {
+  return new Date(J2000().getTime() + days * 86400000)
+    .toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+}
+function daysToInputVal(days) {
+  const d = new Date(J2000().getTime() + days * 86400000);
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+function parseDateInputs(dateId, timeId) {
+  const dv = document.getElementById(dateId).value;
+  if (!dv) return null;
+  const [y,mo,d] = dv.split('-').map(Number);
+  const tv = document.getElementById(timeId).value;
+  const [h,m] = tv ? tv.split(':').map(Number) : [12,0];
+  return daysFromDate(y,mo,d,h,m);
 }
 
-/** Orbital fraction 0–1 for a planet given days since J2000 */
-function orbitalFraction(planet, days) {
-  return ((days / planet.period) % 1 + 1) % 1;
-}
-
-/** Angular difference on a circle [0,1], always 0–0.5 */
-function circularDiff(a, b) {
-  let d = Math.abs(a - b) % 1;
-  return d > 0.5 ? 1 - d : d;
-}
-
-// ── Zoom ─────────────────────────────────────────────────────────────────────
-function setZoom(z) {
-  z = Math.max(0.2, Math.min(3.0, z));
-  currentZoom = z;
-  const wrapper = document.getElementById('canvas-wrapper');
-  const canvases = wrapper.querySelectorAll('canvas');
-  canvases.forEach(c => {
-    c.style.transform = `scale(${z})`;
-    c.style.transformOrigin = 'center center';
+// ─── Planet controls ─────────────────────────────────────────────────────────
+function buildPlanetControls() {
+  const c = document.getElementById('planetControls');
+  c.innerHTML = '';
+  PLANETS.forEach(p => {
+    const cfg = planetSettings[p.name];
+    const row = document.createElement('div'); row.className = 'planet-row';
+    const dot = document.createElement('span'); dot.className = 'pdot';
+    dot.style.background = `rgb(${p.color.join(',')})`;
+    const chk = document.createElement('input'); chk.type = 'checkbox'; chk.checked = cfg.enabled; chk.id = `chk_${p.name}`;
+    const lbl = document.createElement('label'); lbl.htmlFor = `chk_${p.name}`; lbl.textContent = p.name;
+    const wrap = document.createElement('div'); wrap.className = 'tol-wrap';
+    const slider = document.createElement('input'); slider.type = 'range'; slider.min=0; slider.max=100; slider.value=cfg.tolerance;
+    const valSpan = document.createElement('span'); valSpan.className = 'tol-val'; valSpan.textContent = `${cfg.tolerance}%`;
+    chk.addEventListener('change', () => { planetSettings[p.name].enabled = chk.checked; slider.disabled = !chk.checked; valSpan.style.opacity = chk.checked?'1':'0.3'; });
+    slider.addEventListener('input', () => { planetSettings[p.name].tolerance = parseInt(slider.value); valSpan.textContent = `${slider.value}%`; });
+    wrap.append(slider, valSpan); row.append(chk, dot, lbl, wrap); c.appendChild(row);
   });
-  document.getElementById('zoom-label').textContent = Math.round(z * 100) + '%';
 }
+buildPlanetControls();
 
-function computeFitZoom() {
-  const wrapper = document.getElementById('canvas-wrapper');
-  const ww = wrapper.clientWidth - 16;
-  const wh = wrapper.clientHeight - 16;
-  const fit = Math.min(ww / CANVAS_SIZE, wh / CANVAS_SIZE, 1.0);
-  return Math.max(0.3, fit);
-}
+// ─── Button handlers ──────────────────────────────────────────────────────────
+document.getElementById('setDate').addEventListener('click', () => {
+  const days = parseDateInputs('customDate','customTime');
+  const err = document.getElementById('error');
+  if (days === null) { err.style.display='block'; err.textContent='Please select a date.'; return; }
+  err.style.display='none'; customDaysSinceJ2000 = days;
+});
 
-function fitZoom() {
-  setZoom(computeFitZoom());
-}
+document.getElementById('resetDate').addEventListener('click', () => {
+  customDaysSinceJ2000 = null;
+  const t = new Date();
+  document.getElementById('customDate').value = `${t.getFullYear()}-${String(t.getMonth()+1).padStart(2,'0')}-${String(t.getDate()).padStart(2,'0')}`;
+  document.getElementById('customTime').value = `${String(t.getHours()).padStart(2,'0')}:${String(t.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('error').style.display = 'none';
+});
 
-// ── Update planet angle table ─────────────────────────────────────────────────
-function updateAnglesTable() {
-  const days = getCurrentDays();
-  const tbody = document.getElementById('angles-tbody');
-  let html = '';
-  for (const p of planets) {
-    const frac = orbitalFraction(p, days);
-    const deg = (frac * 360).toFixed(1);
-    html += `<tr><td style="color:rgb(${p.color.join(',')})">● ${p.name}</td><td>${deg}°</td></tr>`;
-  }
-  tbody.innerHTML = html;
-}
+document.getElementById('setCompare').addEventListener('click', () => {
+  const days = parseDateInputs('compareDate','compareTime');
+  const err = document.getElementById('error2');
+  if (days === null) { err.style.display='block'; err.textContent='Please select a date.'; return; }
+  err.style.display='none'; compareDaysSinceJ2000 = days;
+  document.getElementById('compareNote').style.display='block';
+});
 
-// ── Similar Alignments Search ─────────────────────────────────────────────────
-let searchWorker = null;
-let isSearching = false;
+document.getElementById('clearCompare').addEventListener('click', () => {
+  compareDaysSinceJ2000 = null;
+  document.getElementById('compareDate').value = '';
+  document.getElementById('compareTime').value = '';
+  document.getElementById('error2').style.display='none';
+  document.getElementById('compareNote').style.display='none';
+});
 
-function findSimilarAlignments() {
-  if (isSearching) return;
-
-  const refDays = getCurrentDays();
-  const tolerance = parseFloat(document.getElementById('tolerance-input').value) / 100;
-  const rangeYears = parseInt(document.getElementById('search-range-input').value, 10);
-
-  const btn = document.getElementById('find-alignments-btn');
-  const statusEl = document.getElementById('alignment-status');
-  const resultsEl = document.getElementById('alignment-results');
-
-  // Reference fractions
-  const refFracs = planets.map(p => orbitalFraction(p, refDays));
-
-  btn.disabled = true;
-  isSearching = true;
-  statusEl.textContent = 'Searching…';
-  resultsEl.innerHTML = '';
-
-  // Run async in chunks to avoid blocking UI
-  const startDays = refDays - rangeYears * 365.25;
-  const endDays   = refDays + rangeYears * 365.25;
-
-  // Step: check every ~30 days (monthly), then refine
-  const COARSE_STEP = 30;     // days
-  const REFINE_STEP = 1;      // days
-  const MERGE_GAP   = 60;     // days – merge nearby hits
-
-  const found = []; // { days, score }
-  let d = startDays;
-
-  function processChunk() {
-    const CHUNK = 2000; // iterations per chunk
-    let count = 0;
-    while (d <= endDays && count < CHUNK) {
-      // Skip the reference date window (±180 days)
-      if (Math.abs(d - refDays) > 180) {
-        let match = true;
-        let totalDiff = 0;
-        for (let i = 0; i < planets.length; i++) {
-          const frac = orbitalFraction(planets[i], d);
-          const diff = circularDiff(frac, refFracs[i]);
-          if (diff > tolerance) { match = false; break; }
-          totalDiff += diff;
-        }
-        if (match) {
-          found.push({ days: d, score: totalDiff / planets.length });
-        }
-      }
-      d += COARSE_STEP;
-      count++;
-    }
-
-    const pct = Math.round(((d - startDays) / (endDays - startDays)) * 100);
-    statusEl.textContent = `Searching… ${Math.min(pct, 100)}%`;
-
-    if (d <= endDays) {
-      requestAnimationFrame(processChunk);
-    } else {
-      finishSearch();
-    }
-  }
-
-  // Reset to current time
-  document.getElementById('resetDate').addEventListener('click', () => {
-    customDaysSinceJ2000 = null;
-    document.getElementById('customDate').value = '';
-    document.getElementById('customTime').value = '';
-    document.getElementById('error').style.display = 'none';
+// ─── Nav arrows ───────────────────────────────────────────────────────────────
+let navStepDays = 1;
+document.querySelectorAll('.nav-step button').forEach(btn => {
+  btn.addEventListener('click', () => {
+    navStepDays = parseInt(btn.dataset.step);
+    document.getElementById('navStepLabel').textContent =
+      ({1:'1 day',7:'1 week',30:'1 month',365:'1 year'})[btn.dataset.step];
+    document.querySelectorAll('.nav-step button').forEach(b => b.style.color='');
+    btn.style.color='#99f';
   });
+});
+document.querySelector('.nav-step button[data-step="1"]').style.color = '#99f';
 
-  // Helper: update date/time inputs to reflect current customDaysSinceJ2000
-  function syncInputsFromDays() {
-    let j2000 = new Date(2000, 0, 1, 12, 0, 0);
-    let ms = customDaysSinceJ2000 * 24 * 60 * 60 * 1000;
-    let d = new Date(j2000.getTime() + ms);
-    let yyyy = d.getFullYear();
-    let mm = String(d.getMonth() + 1).padStart(2, '0');
-    let dd = String(d.getDate()).padStart(2, '0');
-    let hh = String(d.getHours()).padStart(2, '0');
-    let min = String(d.getMinutes()).padStart(2, '0');
-    document.getElementById('customDate').value = `${yyyy}-${mm}-${dd}`;
-    document.getElementById('customTime').value = `${hh}:${min}`;
-  }
+function shiftPrimaryDate(delta) {
+  customDaysSinceJ2000 = (customDaysSinceJ2000 !== null ? customDaysSinceJ2000 : nowDays()) + delta;
+  document.getElementById('customDate').value = daysToInputVal(customDaysSinceJ2000);
+  const d = new Date(J2000().getTime() + customDaysSinceJ2000 * 86400000);
+  document.getElementById('customTime').value = `${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+  document.getElementById('error').style.display='none';
+}
+document.getElementById('navBack').addEventListener('click', () => shiftPrimaryDate(-navStepDays));
+document.getElementById('navFwd').addEventListener('click',  () => shiftPrimaryDate(+navStepDays));
 
-  // Navigate backward/forward by N days
-  function navigateDays(direction) {
-    let step = parseFloat(document.getElementById('dayStep').value) || 1;
-    if (customDaysSinceJ2000 === null) {
-      let now = new Date();
-      let j2000 = new Date(2000, 0, 1, 12, 0, 0);
-      customDaysSinceJ2000 = (now - j2000) / (1000 * 60 * 60 * 24);
-    }
-    customDaysSinceJ2000 += direction * step;
-    syncInputsFromDays();
-    document.getElementById('error').style.display = 'none';
-  }
-
-  document.getElementById('navBack').addEventListener('click', () => navigateDays(-1));
-  document.getElementById('navForward').addEventListener('click', () => navigateDays(1));
-  function finishSearch() {
-    // Merge nearby results, keep best score per cluster
-    const merged = [];
-    for (const hit of found) {
-      const last = merged[merged.length - 1];
-      if (last && Math.abs(hit.days - last.days) < MERGE_GAP) {
-        if (hit.score < last.score) {
-          merged[merged.length - 1] = hit;
-        }
-      } else {
-        merged.push({ ...hit });
-      }
-    }
-
-    // Sort by proximity to reference date
-    merged.sort((a, b) => Math.abs(a.days - refDays) - Math.abs(b.days - refDays));
-
-    renderResults(merged, refDays);
-    btn.disabled = false;
-    isSearching = false;
-    statusEl.textContent = merged.length
-      ? `Found ${merged.length} match${merged.length !== 1 ? 'es' : ''}.`
-      : 'No matches found. Try increasing tolerance or range.';
-  }
-
-  requestAnimationFrame(processChunk);
+// ─── Alignment check ──────────────────────────────────────────────────────────
+function checkAlignments(primaryDays, compareDays) {
+  return PLANETS.map(p => {
+    const cfg = planetSettings[p.name];
+    if (!cfg.enabled) return null;
+    const diff = angDiff(helioLong(primaryDays, p), helioLong(compareDays, p));
+    const pct  = closenessPct(diff);
+    return { name: p.name, pct: pct.toFixed(0), aligned: pct >= cfg.tolerance, color: p.color };
+  }).filter(Boolean);
 }
 
-function daysToDate(days) {
-  const ms = days * 24 * 60 * 60 * 1000;
-  const date = new Date(J2000.getTime() + ms);
-  return date;
+function updateAlignmentStatus(primaryDays) {
+  const div = document.getElementById('alignmentStatus');
+  if (compareDaysSinceJ2000 === null) {
+    div.innerHTML = '<span style="color:#334">Set a Compare Date to see alignment %.</span>'; return;
+  }
+  const results = checkAlignments(primaryDays, compareDaysSinceJ2000);
+  if (!results.length) { div.innerHTML='<span style="color:#334">No planets selected.</span>'; return; }
+  div.innerHTML = results.map(r =>
+    `<div class="${r.aligned?'ok':'no'}">${r.aligned?'✓':'·'} <span style="color:rgb(${r.color.join(',')})">■</span> ${r.name}: ${r.pct}%${r.aligned?' <b>✓</b>':''}</div>`
+  ).join('');
 }
 
-function renderResults(results, refDays) {
-  const el = document.getElementById('alignment-results');
-  if (!results.length) {
-    el.innerHTML = '<div class="no-results">No similar dates found.</div>';
+// ─── Accordion ───────────────────────────────────────────────────────────────
+document.getElementById('accordionHeader').addEventListener('click', () => {
+  const body  = document.getElementById('accordionBody');
+  const arrow = document.getElementById('accordionArrow');
+  const open  = body.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+});
+
+// ─── Saved Dates ─────────────────────────────────────────────────────────────
+const SAVED_KEY = 'solarClockSavedDates';
+
+function loadSaved() {
+  try { return JSON.parse(localStorage.getItem(SAVED_KEY)) || []; }
+  catch(e) { return []; }
+}
+function storeSaved(arr) {
+  localStorage.setItem(SAVED_KEY, JSON.stringify(arr));
+}
+
+function renderSavedList() {
+  const list = document.getElementById('savedList');
+  const saved = loadSaved();
+  if (!saved.length) {
+    list.innerHTML = '<div style="font-size:11px;color:#334;font-family:Arial,sans-serif;padding:3px 0;">No saved dates yet.</div>';
     return;
   }
-
-  let html = '';
-  for (const hit of results.slice(0, 30)) {
-    const date = daysToDate(hit.days);
-    const deltaYears = ((hit.days - refDays) / 365.25).toFixed(1);
-    const sign = deltaYears >= 0 ? '+' : '';
-    let dateStr;
-    const yr = date.getFullYear();
-    if (yr < 1 || yr > 9999) {
-      dateStr = `Year ${yr}`;
-    } else {
-      dateStr = date.toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
-    }
-    const scoreStr = (hit.score * 100).toFixed(2) + '% avg diff';
-    html += `
-      <div class="alignment-item" data-days="${hit.days}" title="Jump to this date">
-        <div class="ali-date">${dateStr}</div>
-        <div class="ali-delta">${sign}${deltaYears} years</div>
-        <div class="ali-score">${scoreStr}</div>
+  list.innerHTML = '';
+  saved.forEach((entry, idx) => {
+    const item = document.createElement('div');
+    item.className = 'saved-item';
+    // Format date display
+    const dispDate = Math.abs(entry.days / 365.25) > 10000
+      ? `Year ${Math.round(2000 + entry.days / 365.25)}`
+      : daysToDateStr(entry.days);
+    item.innerHTML = `
+      <div class="saved-item-info">
+        <div class="saved-item-title" title="${entry.label}">${entry.label}</div>
+        <div class="saved-item-date">${dispDate}</div>
+      </div>
+      <div class="saved-item-btns">
+        <button data-idx="${idx}" data-action="primary" title="Set as Primary">P</button>
+        <button data-idx="${idx}" data-action="compare" title="Set as Compare">C</button>
+        <button data-idx="${idx}" data-action="delete"  class="del-btn" title="Delete">✕</button>
       </div>`;
-  }
-  if (results.length > 30) {
-    html += `<div class="no-results">…and ${results.length - 30} more.</div>`;
-  }
-  el.innerHTML = html;
+    list.appendChild(item);
+  });
 
-  // Click handlers: jump to that date
-  el.querySelectorAll('.alignment-item').forEach(item => {
-    item.addEventListener('click', () => {
-      const days = parseFloat(item.dataset.days);
-      customDaysSinceJ2000 = days;
-      const date = daysToDate(days);
-      // Update input fields if in valid range
-      try {
-        const yr = date.getFullYear();
-        if (yr >= 1 && yr <= 9999) {
-          document.getElementById('customDate').value = date.toISOString().slice(0, 10);
-          document.getElementById('customTime').value = '12:00';
-        }
-      } catch(e) {}
-      updateAnglesTable();
+  list.querySelectorAll('button[data-action]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      const action = btn.dataset.action;
+      const saved = loadSaved();
+      const entry = saved[idx];
+      if (!entry) return;
+
+      if (action === 'primary') {
+        customDaysSinceJ2000 = entry.days;
+        document.getElementById('customDate').value = Math.abs(entry.days/365.25) < 100000
+          ? daysToInputVal(entry.days) : '';
+        document.getElementById('customTime').value = '12:00';
+        document.getElementById('error').style.display = 'none';
+      } else if (action === 'compare') {
+        compareDaysSinceJ2000 = entry.days;
+        document.getElementById('compareDate').value = Math.abs(entry.days/365.25) < 100000
+          ? daysToInputVal(entry.days) : '';
+        document.getElementById('compareTime').value = '12:00';
+        document.getElementById('compareNote').style.display = 'block';
+        document.getElementById('error2').style.display = 'none';
+      } else if (action === 'delete') {
+        saved.splice(idx, 1);
+        storeSaved(saved);
+        renderSavedList();
+      }
     });
   });
 }
 
-// ── p5.js sketch ─────────────────────────────────────────────────────────────
-new p5(function(p) {
-  p.setup = function() {
-    p5Canvas = p.createCanvas(CANVAS_SIZE, CANVAS_SIZE);
-    p5Canvas.parent('canvas-wrapper');
-    p.textAlign(p.CENTER, p.CENTER);
-    p.textSize(12);
+document.getElementById('saveCurrentBtn').addEventListener('click', () => {
+  const label = document.getElementById('saveName').value.trim();
+  const msg = document.getElementById('saveMsg');
+  if (!label) { msg.textContent = 'Enter a label first.'; msg.style.color='#f87'; return; }
+  const days = getPrimaryDays();
+  const saved = loadSaved();
+  saved.unshift({ label, days, savedAt: Date.now() });
+  storeSaved(saved);
+  document.getElementById('saveName').value = '';
+  msg.textContent = `Saved "${label}"`;
+  msg.style.color = '#5a5';
+  setTimeout(() => { msg.textContent = ''; }, 2500);
+  renderSavedList();
+});
 
-    // Apply CSS so canvas doesn't force layout overflow
-    const c = p5Canvas.elt;
-    c.style.display = 'block';
-    c.style.flexShrink = '0';
+renderSavedList();
 
-    if (isPremium) {
-      document.getElementById('customDate').disabled = false;
-      document.getElementById('customTime').disabled = false;
-      document.getElementById('setDate').disabled = false;
+// ─── Historic Events ─────────────────────────────────────────────────────────
+// Days from J2000 (Jan 1, 2000 12:00). For ancient dates use approximate year.
+// daysFromYear(y) = (y - 2000) * 365.25  (positive = CE, negative = BCE)
+function daysFromYear(y, mo=6, d=15) {
+  // For years within JS Date range use proper calc; otherwise approximate
+  if (y > -271820 && y < 275760) {
+    return daysFromDate(y, mo, d);
+  }
+  // Approximate: offset from J2000 in days
+  return (y - 2000) * 365.25;
+}
+
+const HISTORIC_EVENTS = [
+  // ── Deep Time ──────────────────────────────────────────────────────────────
+  { group: 'Deep Time & Prehistory',
+    events: [
+      { label: 'Formation of Earth',           year: -4540000000, approx: '~4.54 billion BCE', wiki: 'Formation_and_evolution_of_the_Solar_System' },
+      { label: 'First Life on Earth',           year: -3800000000, approx: '~3.8 billion BCE',  wiki: 'Earliest_known_life_forms' },
+      { label: 'Great Oxidation Event',         year: -2400000000, approx: '~2.4 billion BCE',  wiki: 'Great_Oxidation_Event' },
+      { label: 'Cambrian Explosion',            year:  -541000000, approx: '~541 million BCE',  wiki: 'Cambrian_explosion' },
+      { label: 'First Land Plants',             year:  -470000000, approx: '~470 million BCE',  wiki: 'Evolutionary_history_of_plants' },
+      { label: 'First Dinosaurs',               year:  -240000000, approx: '~240 million BCE',  wiki: 'Dinosaur' },
+      { label: 'Chicxulub Impact / Dino Extinction', year: -66000000, approx: '~66 million BCE', wiki: 'Chicxulub_impactor' },
+      { label: 'First Hominids (Australopithecus)',  year:  -4000000, approx: '~4 million BCE',  wiki: 'Australopithecus' },
+      { label: 'First Homo Sapiens',            year:   -300000, approx: '~300,000 BCE',        wiki: 'Early_modern_human' },
+      { label: 'Toba Supervolcano Eruption',    year:    -74000, approx: '~74,000 BCE',         wiki: 'Toba_catastrophe_theory' },
+      { label: 'Out of Africa Migration',       year:    -70000, approx: '~70,000 BCE',         wiki: 'Recent_African_origin_of_modern_humans' },
+      { label: 'Cave Paintings — Lascaux',      year:    -17000, approx: '~17,000 BCE',         wiki: 'Lascaux' },
+    ]
+  },
+  // ── Ancient Civilisations ──────────────────────────────────────────────────
+  { group: 'Ancient Civilisations',
+    events: [
+      { label: 'Agricultural Revolution Begins', year: -10000, approx: '~10,000 BCE',          wiki: 'Neolithic_Revolution' },
+      { label: 'Göbekli Tepe (World\'s Oldest Temple)', year: -9600, approx: '~9600 BCE',       wiki: 'Göbekli_Tepe' },
+      { label: 'First Egyptian Dynasty',         year:  -3100, approx: '~3100 BCE',             wiki: 'First_Dynasty_of_Egypt' },
+      { label: 'Stonehenge Construction Begins', year:  -3000, approx: '~3000 BCE',             wiki: 'Stonehenge' },
+      { label: 'Great Pyramid of Giza',          year:  -2560, approx: '~2560 BCE',             wiki: 'Great_Pyramid_of_Giza' },
+      { label: 'Code of Hammurabi',              year:  -1754, approx: '~1754 BCE',             wiki: 'Code_of_Hammurabi' },
+      { label: 'Trojan War (approx.)',           year:  -1184, approx: '~1184 BCE',             wiki: 'Trojan_War' },
+      { label: 'Homer — Iliad & Odyssey',        year:   -750, approx: '~750 BCE',              wiki: 'Homer' },
+    ]
+  },
+  // ── Religion & Philosophy ──────────────────────────────────────────────────
+  { group: 'Religion & Philosophy',
+    events: [
+      { label: 'Rigveda Composed (Hinduism)',    year:  -1500, approx: '~1500 BCE',             wiki: 'Rigveda' },
+      { label: 'Moses & the Exodus (trad.)',     year:  -1446, approx: '~1446 BCE',             wiki: 'The_Exodus' },
+      { label: 'Confucius — Birth',              year:   -551, approx: '551 BCE',               wiki: 'Confucius' },
+      { label: 'Siddhartha Gautama — Birth',     year:   -563, approx: '563 BCE',               wiki: 'Gautama_Buddha' },
+      { label: 'Siddhartha Gautama — Enlightenment', year: -528, approx: '528 BCE',             wiki: 'Enlightenment_in_Buddhism' },
+      { label: 'Socrates — Birth',               year:   -470, approx: '470 BCE',               wiki: 'Socrates' },
+      { label: 'Aristotle — Birth',              year:   -384, approx: '384 BCE',               wiki: 'Aristotle' },
+      { label: 'Birth of Jesus Christ (trad.)',  year:     -4, mo: 12, d: 25, approx: 'c. 4 BCE', wiki: 'Nativity_of_Jesus' },
+      { label: 'Crucifixion of Jesus Christ',    year:      33, mo: 4,  d: 3,  approx: '33 CE',  wiki: 'Crucifixion_of_Jesus' },
+      { label: 'Council of Nicaea',              year:     325, mo: 5,  d: 20, approx: '325 CE', wiki: 'First_Council_of_Nicaea' },
+      { label: 'Muhammad — Birth',               year:     570, mo: 4,  d: 20, approx: '570 CE', wiki: 'Muhammad' },
+      { label: 'Hijra — Islam calendar begins',  year:     622, mo: 9,  d: 24, approx: '622 CE', wiki: 'Hijra_(Islam)' },
+    ]
+  },
+  // ── Classical & Medieval ───────────────────────────────────────────────────
+  { group: 'Classical & Medieval World',
+    events: [
+      { label: 'Alexander the Great — Birth',    year:  -356, mo: 7, d: 20, approx: '356 BCE',    wiki: 'Alexander_the_Great' },
+      { label: 'Julius Caesar — Assassination',  year:   -44, mo: 3, d: 15, approx: '44 BCE',     wiki: 'Assassination_of_Julius_Caesar' },
+      { label: 'Augustus — First Roman Emperor', year:   -27, mo: 1, d: 16, approx: '27 BCE',     wiki: 'Augustus' },
+      { label: 'Eruption of Vesuvius / Pompeii', year:    79, mo: 8, d: 24, approx: '79 CE',      wiki: '79_AD_eruption_of_Mount_Vesuvius' },
+      { label: 'Fall of Western Rome',           year:   476, mo: 9, d: 4,  approx: '476 CE',     wiki: 'Fall_of_the_Western_Roman_Empire' },
+      { label: 'Charlemagne Crowned Emperor',    year:   800, mo: 12,d: 25, approx: '800 CE',     wiki: 'Charlemagne' },
+      { label: 'Viking Discovery of America',    year:  1000, mo: 1, d: 1,  approx: 'c. 1000 CE', wiki: 'Norse_colonization_of_North_America' },
+      { label: 'Genghis Khan — Death',           year:  1227, mo: 8, d: 18, approx: '1227 CE',    wiki: 'Genghis_Khan' },
+      { label: 'Magna Carta Signed',             year:  1215, mo: 6, d: 15, approx: '1215 CE',    wiki: 'Magna_Carta' },
+      { label: 'Black Death Peaks in Europe',    year:  1347, mo: 10,d: 1,  approx: '1347 CE',    wiki: 'Black_Death' },
+    ]
+  },
+  // ── Early Modern ───────────────────────────────────────────────────────────
+  { group: 'Early Modern',
+    events: [
+      { label: 'Columbus reaches Americas',      year:  1492, mo: 10,d: 12, approx: '1492 CE',    wiki: 'Voyages_of_Christopher_Columbus' },
+      { label: 'Copernicus — Heliocentric Model',year:  1543, mo: 5, d: 24, approx: '1543 CE',    wiki: 'Nicolaus_Copernicus' },
+      { label: 'Galileo — Birth',                year:  1564, mo: 2, d: 15, approx: '1564 CE',    wiki: 'Galileo_Galilei' },
+      { label: 'Isaac Newton — Birth',           year:  1643, mo: 1, d: 4,  approx: '1643 CE',    wiki: 'Isaac_Newton' },
+      { label: 'Napoleon — Birth',               year:  1769, mo: 8, d: 15, approx: '1769 CE',    wiki: 'Napoleon' },
+      { label: 'American Declaration of Independence', year: 1776, mo: 7, d: 4, approx: 'July 4, 1776', wiki: 'United_States_Declaration_of_Independence' },
+      { label: 'French Revolution Begins',       year:  1789, mo: 7, d: 14, approx: '1789 CE',    wiki: 'French_Revolution' },
+    ]
+  },
+  // ── Modern Era ─────────────────────────────────────────────────────────────
+  { group: 'Modern Era',
+    events: [
+      { label: 'Charles Darwin — On the Origin of Species', year: 1859, mo: 11, d: 24, approx: '1859 CE', wiki: 'On_the_Origin_of_Species' },
+      { label: 'Albert Einstein — Birth',        year:  1879, mo: 3, d: 14, approx: '1879 CE',    wiki: 'Albert_Einstein' },
+      { label: 'First Powered Flight — Wright Brothers', year: 1903, mo: 12, d: 17, approx: '1903 CE', wiki: 'Wright_brothers' },
+      { label: 'World War I Begins',             year:  1914, mo: 7, d: 28, approx: '1914 CE',    wiki: 'World_War_I' },
+      { label: 'First Nuclear Bomb (Trinity)',   year:  1945, mo: 7, d: 16, approx: '1945 CE',    wiki: 'Trinity_(nuclear_test)' },
+      { label: 'World War II Ends',              year:  1945, mo: 9, d: 2,  approx: '1945 CE',    wiki: 'World_War_II' },
+      { label: 'Universal Declaration of Human Rights', year: 1948, mo: 12, d: 10, approx: '1948 CE', wiki: 'Universal_Declaration_of_Human_Rights' },
+      { label: 'Sputnik — First Satellite',      year:  1957, mo: 10,d: 4,  approx: '1957 CE',    wiki: 'Sputnik_1' },
+      { label: 'Apollo 11 — Moon Landing',       year:  1969, mo: 7, d: 20, approx: '1969 CE',    wiki: 'Apollo_11' },
+      { label: 'Elon Musk — Birth',              year:  1971, mo: 6, d: 28, approx: 'June 28, 1971', wiki: 'Elon_Musk' },
+      { label: 'World Wide Web Invented',        year:  1989, mo: 3, d: 12, approx: '1989 CE',    wiki: 'World_Wide_Web' },
+      { label: 'SpaceX Falcon 9 — First Landing', year: 2015, mo: 12,d: 21, approx: '2015 CE',   wiki: 'SpaceX_reusable_launch_system_development_program' },
+    ]
+  },
+];
+
+function renderHistList(filter) {
+  const list = document.getElementById('histList');
+  list.innerHTML = '';
+  const q = (filter || '').toLowerCase().trim();
+
+  HISTORIC_EVENTS.forEach(group => {
+    const matches = group.events.filter(e =>
+      !q || e.label.toLowerCase().includes(q) || (e.approx||'').toLowerCase().includes(q)
+    );
+    if (!matches.length) return;
+
+    const glbl = document.createElement('div');
+    glbl.className = 'hist-group-label';
+    glbl.textContent = group.group;
+    list.appendChild(glbl);
+
+    matches.forEach(ev => {
+      const days = daysFromYear(ev.year, ev.mo || 6, ev.d || 15);
+      const item = document.createElement('div');
+      item.className = 'hist-item';
+      const grokUrl = `https://x.com/i/grok?text=${encodeURIComponent(ev.label)}`;
+      item.innerHTML = `
+        <div class="hist-item-info">
+          <div class="hist-item-title" title="${ev.label}">${ev.label}</div>
+          <div class="hist-item-date">${ev.approx}</div>
+        </div>
+        <div class="hist-item-btns">
+          <button data-action="primary" title="Set as Primary">P</button>
+          <button data-action="compare" title="Set as Compare">C</button>
+          <a href="${grokUrl}" target="_blank" title="Ask Grok" style="font-size:9px;padding:2px 5px;color:#a78;background:#0a0a14;border:1px solid #1a1a28;border-radius:4px;text-decoration:none;display:flex;align-items:center;line-height:1;">?</a>
+        </div>`;
+
+      item.querySelectorAll('button[data-action]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          if (btn.dataset.action === 'primary') {
+            customDaysSinceJ2000 = days;
+            document.getElementById('customDate').value =
+              Math.abs(days / 365.25) < 100000 ? daysToInputVal(days) : '';
+            document.getElementById('customTime').value = '12:00';
+            document.getElementById('error').style.display = 'none';
+          } else {
+            compareDaysSinceJ2000 = days;
+            document.getElementById('compareDate').value =
+              Math.abs(days / 365.25) < 100000 ? daysToInputVal(days) : '';
+            document.getElementById('compareTime').value = '12:00';
+            document.getElementById('compareNote').style.display = 'block';
+            document.getElementById('error2').style.display = 'none';
+          }
+        });
+      });
+
+      list.appendChild(item);
+    });
+  });
+
+  if (!list.children.length) {
+    list.innerHTML = '<div style="font-size:11px;color:#334;font-family:Arial,sans-serif;padding:4px 0;">No events match.</div>';
+  }
+}
+
+// Accordion toggle
+document.getElementById('histHeader').addEventListener('click', () => {
+  const body  = document.getElementById('histBody');
+  const arrow = document.getElementById('histArrow');
+  const open  = body.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+});
+
+// Search filter
+document.getElementById('histSearch').addEventListener('input', e => {
+  renderHistList(e.target.value);
+});
+
+renderHistList('');
+
+// ─── Similar dates scan ───────────────────────────────────────────────────────
+let scanDirection = 'both';
+document.querySelectorAll('.scan-dir-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    scanDirection = btn.dataset.dir;
+    document.querySelectorAll('.scan-dir-btn').forEach(b => b.classList.remove('active-dir'));
+    btn.classList.add('active-dir');
+  });
+});
+
+// Format a year count nicely for display
+function fmtYears(yDiff) {
+  const abs = Math.abs(yDiff);
+  const sign = yDiff >= 0 ? '+' : '−';
+  if (abs >= 1e9)       return `${sign}${(abs/1e9).toFixed(2)}B yrs`;
+  if (abs >= 1e6)       return `${sign}${(abs/1e6).toFixed(2)}M yrs`;
+  if (abs >= 1000)      return `${sign}${(abs/1000).toFixed(1)}K yrs`;
+  return `${sign}${abs.toFixed(1)} yrs`;
+}
+
+// Format a days value to a readable date string for large ranges
+function daysToDisplayStr(days) {
+  const absYr = Math.abs(days / 365.25);
+  if (absYr > 10000) {
+    // Don't try to construct a JS Date — just show year
+    const yr = Math.round(2000 + days / 365.25);
+    return `Year ${yr > 0 ? yr : yr} CE`;
+  }
+  return daysToDateStr(days);
+}
+
+document.getElementById('simScanBtn').addEventListener('click', () => {
+  const status = document.getElementById('simStatus');
+  const list   = document.getElementById('similarList');
+  status.textContent = 'Scanning…'; list.innerHTML = '';
+
+  setTimeout(() => {
+    const primaryDays = getPrimaryDays();
+    const refs = {};
+    PLANETS.forEach(p => { if (planetSettings[p.name].enabled) refs[p.name] = helioLong(primaryDays, p); });
+    const planetNames = Object.keys(refs);
+    if (!planetNames.length) { status.textContent = 'No planets selected.'; return; }
+
+    const rangeYears = parseFloat(document.getElementById('scanRange').value);
+    const rangeDays  = rangeYears * 365.25;
+
+    // Adaptive step size: smaller ranges → fine steps, huge ranges → coarser
+    // We target ~50,000 samples max for performance
+    const totalSpan = (scanDirection === 'both' ? 2 : 1) * rangeDays;
+    const rawStep   = Math.max(5, totalSpan / 50000);
+    // Round step to a sensible unit
+    const step = rawStep < 10     ? 5       :
+                 rawStep < 100    ? Math.round(rawStep/10)*10 :
+                 rawStep < 1000   ? Math.round(rawStep/100)*100 :
+                 rawStep < 10000  ? Math.round(rawStep/500)*500 :
+                                    Math.round(rawStep/1000)*1000;
+
+    const startOffset = scanDirection === 'future' ? 30      : -rangeDays;
+    const endOffset   = scanDirection === 'past'   ? -30     :  rangeDays;
+
+    const results = [];
+    // Precompute planet objects for speed
+    const planets4scan = planetNames.map(name => ({
+      name,
+      planet: PLANETS.find(p => p.name === name),
+      ref: refs[name],
+      tolerance: planetSettings[name].tolerance
+    }));
+
+    for (let offset = startOffset; offset <= endOffset; offset += step) {
+      if (Math.abs(offset) < 30) continue;
+      const d = primaryDays + offset;
+      let allMatch = true, minPct = 100;
+      for (const { planet, ref, tolerance } of planets4scan) {
+        // helioLong now handles large days safely via period-reduction
+        const pct = closenessPct(angDiff(helioLong(d, planet), ref));
+        if (pct < tolerance) { allMatch = false; break; }
+        if (pct < minPct) minPct = pct;
+      }
+      if (allMatch) {
+        const last = results[results.length - 1];
+        const minSep = Math.max(60, step * 2);
+        if (!last || Math.abs(d - last.days) > minSep) {
+          results.push({ days: d, score: minPct });
+        }
+      }
     }
 
-    // Set Date
-    document.getElementById('setDate').addEventListener('click', () => {
-      const dateInput = document.getElementById('customDate').value;
-      const timeInput = document.getElementById('customTime').value;
-      const errorDiv  = document.getElementById('error');
+    results.sort((a, b) => b.score - a.score);
+    const top = results.slice(0, 30);
 
-      if (!dateInput) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = 'Please select a date.';
-        return;
-      }
+    const stepDesc = step >= 365 ? `~${Math.round(step/365.25).toLocaleString()}yr step` : `${step}d step`;
+    const minTol = Math.min(...planetNames.map(n => planetSettings[n].tolerance));
 
-      const [year, month, day] = dateInput.split('-').map(Number);
-      const [hours, minutes]   = timeInput ? timeInput.split(':').map(Number) : [12, 0];
+    if (!top.length) {
+      status.textContent = `No matches (${stepDesc}, min tol: ${minTol}%).`; return;
+    }
 
-      if (year < -999999998 || year > new Date().getFullYear()) {
-        errorDiv.style.display = 'block';
-        errorDiv.textContent = 'Year must be between -999,999,998 and present.';
-        return;
-      }
-      errorDiv.style.display = 'none';
+    status.textContent = `${top.length} result${top.length>1?'s':''} · ${stepDesc}`;
 
-      if (Math.abs(year - 2000) > 10000) {
-        customDaysSinceJ2000 = (year - 2000) * 365.25;
+    top.forEach(r => {
+      const item = document.createElement('div'); item.className = 'sim-item';
+      const yDiff = (r.days - primaryDays) / 365.25;
+      item.innerHTML = `
+        <div class="sim-date">${daysToDisplayStr(r.days)}</div>
+        <div class="sim-detail">${fmtYears(yDiff)} · match ${r.score.toFixed(0)}%</div>`;
+      item.addEventListener('click', () => {
+        compareDaysSinceJ2000 = r.days;
+        // Only populate date inputs for dates JS Date can handle reasonably
+        if (Math.abs(r.days / 365.25) < 100000) {
+          document.getElementById('compareDate').value = daysToInputVal(r.days);
+        } else {
+          document.getElementById('compareDate').value = '';
+        }
+        document.getElementById('compareTime').value = '12:00';
+        document.getElementById('compareNote').style.display = 'block';
+        document.getElementById('error2').style.display = 'none';
+      });
+      list.appendChild(item);
+    });
+  }, 10);
+});
+
+// ─── p5 sketch ────────────────────────────────────────────────────────────────
+new p5(function(sk) {
+  const W = 1000, H = 1000;
+  const CX = W/2, CY = H/2;
+
+  // Starfield
+  const STARS = [];
+  for (let i = 0; i < 380; i++) {
+    STARS.push({
+      x: Math.random()*W - W/2,
+      y: Math.random()*H - H/2,
+      r: Math.random()*1.4 + 0.2,
+      a: Math.random()*180 + 60
+    });
+  }
+
+  // ── Shared constants (used by both analog clock and calendar overlay) ──────
+  const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const QUARTER_COLORS = [
+    [100,160,255], // Jan / XII
+    [ 80,210, 80], // Apr / III
+    [255,160, 60], // Jul / VI
+    [200,100,255], // Oct / IX
+  ];
+  const quarterIdx = [0, 3, 6, 9];
+
+  sk.setup = function() {
+    sk.createCanvas(W, H).parent('canvas-wrap');
+    sk.textAlign(sk.CENTER, sk.CENTER);
+    sk.loop();
+  };
+
+  sk.draw = function() {
+    // Deep space background
+    sk.background(4, 4, 8);
+    sk.translate(CX, CY);
+
+    const primaryDays = getPrimaryDays();
+    const rotOff = getCanvasRotationOffset(primaryDays);
+
+    // ── Starfield ──
+    drawStars(sk);
+
+    // ── Calendar overlay ──
+    drawCalendarOverlay(sk, primaryDays, rotOff);
+
+    // ── Analog clock overlay ──
+    drawAnalogClock(sk, primaryDays, rotOff);
+
+    // ── Sun ──
+    drawSun(sk);
+
+    // ── Compare planets (faded) ──
+    if (compareDaysSinceJ2000 !== null) drawPlanets(sk, compareDaysSinceJ2000, primaryDays, rotOff, true);
+
+    // ── Primary planets ──
+    drawPlanets(sk, primaryDays, primaryDays, rotOff, false);
+
+    // ── Digital clock ──
+    drawDigitalClock(sk, primaryDays);
+
+    updateAlignmentStatus(primaryDays);
+  };
+
+  // ── Starfield ──────────────────────────────────────────────────────────────
+  function drawStars(sk) {
+    sk.noStroke();
+    STARS.forEach(s => {
+      const twinkle = 0.85 + 0.15 * Math.sin(sk.millis()*0.001 + s.x);
+      sk.fill(255, 255, 255, s.a * twinkle);
+      sk.ellipse(s.x, s.y, s.r*2, s.r*2);
+    });
+  }
+
+  // ── Sun ────────────────────────────────────────────────────────────────────
+  function drawSun(sk) {
+    // Outer corona glow
+    for (let i = 8; i >= 1; i--) {
+      const a = 12 - i*1.2;
+      sk.noStroke();
+      sk.fill(255, 200, 30, a);
+      sk.ellipse(0, 0, (28 + i*10)*2, (28 + i*10)*2);
+    }
+    // Main body gradient via concentric rings
+    for (let i = 28; i >= 1; i--) {
+      const t = i / 28;
+      const r = sk.lerp(255, 255, t);
+      const g = sk.lerp(240, 140, t);
+      const b = sk.lerp(80,  20, t);
+      sk.fill(r, g, b);
+      sk.noStroke();
+      sk.ellipse(0, 0, i*2, i*2);
+    }
+    // Hot white core
+    sk.fill(255, 255, 220);
+    sk.ellipse(0, 0, 10, 10);
+  }
+
+  // ── Planet orb ────────────────────────────────────────────────────────────
+  function drawPlanetOrb(sk, x, y, p, alpha) {
+    const s = p.size;
+    const [r,g,b] = p.color;
+    const [gr,gg,gb] = p.glowColor;
+
+    // Outer glow
+    for (let i = 4; i >= 1; i--) {
+      sk.noStroke();
+      sk.fill(gr, gg, gb, (alpha * 0.18) / i);
+      sk.ellipse(x, y, (s + i*5)*2, (s + i*5)*2);
+    }
+
+    // Body — gradient via concentric rings
+    for (let i = s; i >= 1; i--) {
+      const t = 1 - i/s;
+      // Highlight at top-left, dark at bottom-right
+      const highlight = Math.max(0, 1 - t*1.4);
+      const rr = Math.min(255, r + highlight*80);
+      const gg2= Math.min(255, g + highlight*80);
+      const bb = Math.min(255, b + highlight*80);
+      sk.fill(rr, gg2, bb, alpha);
+      sk.ellipse(x + (1-t)*s*0.2, y + (1-t)*s*0.1, i*2, i*2);
+    }
+
+    // Specular highlight
+    sk.fill(255, 255, 255, alpha * 0.55);
+    sk.ellipse(x - s*0.28, y - s*0.28, s*0.38, s*0.38);
+
+    // Saturn rings
+    if (p.name === 'Saturn') {
+      sk.noFill();
+      sk.stroke(210, 185, 140, alpha * 0.6);
+      sk.strokeWeight(1.5);
+      sk.ellipse(x, y, s*3.2, s*0.7);
+      sk.stroke(190, 165, 120, alpha * 0.35);
+      sk.strokeWeight(1);
+      sk.ellipse(x, y, s*3.8, s*0.85);
+      sk.strokeWeight(1);
+    }
+  }
+
+  // ── Draw all planets ───────────────────────────────────────────────────────
+  // We need primary positions available when drawing compare planets for overlap detection.
+  // Store them here each frame.
+  const primaryPos = {};
+
+  function drawPlanets(sk, days, primaryDays, rotOff, isCompare) {
+    PLANETS.forEach((p, i) => {
+      const a = drawAngle(days, p, rotOff);
+      const x = p.radius * Math.cos(a);
+      const y = p.radius * Math.sin(a);
+      const [or,og,ob] = ORBIT_COLORS[i];
+
+      if (!isCompare) {
+        // Cache primary position for overlap detection
+        primaryPos[p.name] = { x, y };
+
+        // Orbit ring — colored, subtle
+        sk.noFill();
+        sk.stroke(or, og, ob, 32);
+        sk.strokeWeight(1);
+        sk.ellipse(0, 0, p.radius*2, p.radius*2);
+
+        // Alignment glow ring
+        if (compareDaysSinceJ2000 !== null) {
+          const cfg = planetSettings[p.name];
+          if (cfg && cfg.enabled) {
+            const pct = closenessPct(angDiff(helioLong(primaryDays, p), helioLong(compareDaysSinceJ2000, p)));
+            if (pct >= cfg.tolerance) {
+              sk.noFill(); sk.stroke(p.color[0], p.color[1], p.color[2], 90); sk.strokeWeight(2.5);
+              sk.ellipse(0,0,p.radius*2,p.radius*2); sk.strokeWeight(1);
+            }
+          }
+        }
+
+        drawPlanetOrb(sk, x, y, p, 255);
+
+        // Label
+        sk.fill(200, 200, 215, 210); sk.noStroke();
+        sk.textSize(10); sk.textFont('Arial');
+        sk.text(p.name, x, y + p.size + 11);
+
       } else {
-        const inputDate = new Date(year, month - 1, day, hours, minutes, 0);
-        customDaysSinceJ2000 = daysSinceJ2000FromDate(inputDate);
+        // Compare planet — always drawn at its actual orbit position.
+        // Style: flat faded fill + crisp stark border ring. No glow/halo.
+        // Leader line + label point outward when overlapping primary.
+        const [r,g,b] = p.color;
+        const s = p.size;
+
+        // ── Draw at actual orbit position (always) ──
+        // Flat faded body — no concentric gradient, just a single flat circle
+        sk.noStroke();
+        sk.fill(r, g, b, 55);
+        sk.ellipse(x, y, s*2, s*2);
+        // Crisp border ring — full opacity, stark edge
+        sk.noFill();
+        sk.stroke(r, g, b, 220);
+        sk.strokeWeight(1.5);
+        sk.ellipse(x, y, s*2, s*2);
+        sk.strokeWeight(1);
+
+        // Saturn compare rings
+        if (p.name === 'Saturn') {
+          sk.noFill();
+          sk.stroke(r, g, b, 140); sk.strokeWeight(1);
+          sk.ellipse(x, y, s*3.2, s*0.7);
+          sk.ellipse(x, y, s*3.8, s*0.85);
+          sk.strokeWeight(1);
+        }
+
+        // ── Leader line + label ──
+        // Always draw a short dashed radial leader + label, so compare positions are legible.
+        // Leader goes outward from the planet edge.
+        const nx = x / p.radius, ny = y / p.radius; // radial unit vector
+        const pp = primaryPos[p.name];
+        const overlapDist = pp ? Math.hypot(x - pp.x, y - pp.y) : 999;
+        const isOverlap = overlapDist < s * 3.5;
+
+        // Label offset: push further out when overlapping so it's clearly readable
+        const labelOffset = s + (isOverlap ? s * 3.5 + 10 : 8);
+        const lx = x + nx * labelOffset;
+        const ly = y + ny * labelOffset;
+
+        if (isOverlap) {
+          // Dashed radial line from planet edge to label anchor
+          const lineEnd = s * 2.8 + 8;
+          sk.stroke(r, g, b, 180); sk.strokeWeight(1);
+          const segs = 5;
+          for (let seg = 0; seg < segs; seg++) {
+            if (seg % 2 === 0) {
+              const t0 = (seg / segs), t1 = ((seg + 0.55) / segs);
+              sk.line(
+                x + nx * (s + t0 * lineEnd), y + ny * (s + t0 * lineEnd),
+                x + nx * (s + t1 * lineEnd), y + ny * (s + t1 * lineEnd)
+              );
+            }
+          }
+        }
+
+        sk.fill(r, g, b, isOverlap ? 230 : 180); sk.noStroke();
+        sk.textSize(9); sk.textFont('Arial');
+        sk.text(p.name[0]+'₂', lx, ly);
       }
-      updateAnglesTable();
     });
+  }
 
-    // Reset
-    document.getElementById('resetDate').addEventListener('click', () => {
-      customDaysSinceJ2000 = null;
-      document.getElementById('customDate').value = '';
-      document.getElementById('customTime').value = '';
-      document.getElementById('error').style.display = 'none';
-      updateAnglesTable();
-    });
+  // ── Digital clock ─────────────────────────────────────────────────────────
+  // Bottom-left corner of canvas (canvas coords: origin is center, so bottom-left = (-W/2, H/2))
+  function drawDigitalClock(sk, primaryDays) {
+    const isAncient = customDaysSinceJ2000 !== null && Math.abs(customDaysSinceJ2000 / 365.25) > 100000;
+    const live = (!isAncient && customDaysSinceJ2000 === null) ? new Date()
+               : (!isAncient ? new Date(J2000().getTime() + primaryDays * 86400000) : null);
 
-    // Zoom controls
-    document.getElementById('zoom-in-btn').addEventListener('click',  () => setZoom(currentZoom + 0.1));
-    document.getElementById('zoom-out-btn').addEventListener('click', () => setZoom(currentZoom - 0.1));
-    document.getElementById('zoom-fit-btn').addEventListener('click', fitZoom);
+    const hh = live ? String(live.getHours()).padStart(2,'0') : '--';
+    const mm = live ? String(live.getMinutes()).padStart(2,'0') : '--';
+    const ss = live ? String(live.getSeconds()).padStart(2,'0') : '--';
+    const timeStr = `${hh}:${mm}:${ss}`;
 
-    // Find alignments
-    document.getElementById('find-alignments-btn').addEventListener('click', findSimilarAlignments);
-
-    // Initial fit after layout settles
-    setTimeout(() => {
-      fitZoom();
-      updateAnglesTable();
-    }, 80);
-
-    // Re-fit on resize
-    window.addEventListener('resize', fitZoom);
-  };
-
-  p.draw = function() {
-    p.background(0);
-    p.translate(CANVAS_SIZE / 2, CANVAS_SIZE / 2);
-
-    // Sun
-    p.fill(255, 255, 0);
-    p.noStroke();
-    p.ellipse(0, 0, 30, 30);
-
-    const days = getCurrentDays();
-
-    for (const planet of planets) {
-      // Orbit ring
-      p.noFill();
-      p.stroke(255, 50);
-      p.ellipse(0, 0, planet.radius * 2, planet.radius * 2);
-
-      // Planet position
-      const angle = (p.TWO_PI * days / planet.period) % p.TWO_PI;
-      const x = planet.radius * p.cos(angle);
-      const y = planet.radius * p.sin(angle);
-
-      // Planet
-      p.fill(...planet.color);
-      p.noStroke();
-      p.ellipse(x, y, planet.size, planet.size);
-
-      // Label
-      p.fill(255);
-      p.textSize(11);
-      p.text(planet.name, x, y + planet.size + 10);
+    // Date string — for very large custom dates show approximate year
+    let dateStr;
+    if (isAncient) {
+      const yr = Math.round(2000 + customDaysSinceJ2000 / 365.25);
+      const absYr = Math.abs(yr);
+      const bce = yr < 0;
+      if (absYr >= 1000000000) dateStr = `~${(absYr/1e9).toFixed(2)}B ${bce?'BCE':'CE'}`;
+      else if (absYr >= 1000000) dateStr = `~${(absYr/1e6).toFixed(1)}M ${bce?'BCE':'CE'}`;
+      else if (absYr >= 1000) dateStr = `~${absYr.toLocaleString()} ${bce?'BCE':'CE'}`;
+      else dateStr = `Year ${yr < 0 ? Math.abs(yr)+' BCE' : yr+' CE'}`;
+    } else if (live) {
+      dateStr = live.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
+    } else {
+      dateStr = '';
     }
-  };
+
+    const bw = 152, bh = 50;
+    const margin = 10;
+    // Bottom-left: x = -W/2 + margin, y = H/2 - margin - bh
+    const bx = -W/2 + margin;
+    const by =  H/2 - margin - bh;
+
+    sk.push();
+    sk.resetMatrix();
+    sk.translate(CX, CY); // re-center since we reset
+
+    // Glassmorphism panel
+    sk.noStroke();
+    sk.fill(4, 5, 14, 200);
+    sk.rect(bx, by, bw, bh, 7);
+    // Subtle top highlight line
+    sk.stroke(80, 80, 160, 60); sk.strokeWeight(1);
+    sk.line(bx+7, by+1, bx+bw-7, by+1);
+    // Border
+    sk.noFill(); sk.stroke(35, 35, 80, 130); sk.strokeWeight(1);
+    sk.rect(bx, by, bw, bh, 7);
+
+    // Time — glowing cyan
+    sk.noStroke();
+    // Soft glow behind text
+    sk.fill(60, 160, 255, 30);
+    sk.textSize(23); sk.textFont('Georgia');
+    sk.textAlign(sk.LEFT, sk.TOP);
+    for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++)
+      sk.text(timeStr, bx+12+dx, by+7+dy);
+    sk.fill(110, 205, 255, 240);
+    sk.text(timeStr, bx+12, by+7);
+
+    // Date line
+    sk.fill(90, 95, 140, 170);
+    sk.textSize(9); sk.textFont('Arial');
+    sk.text(dateStr, bx+12, by+34);
+
+    sk.textAlign(sk.CENTER, sk.CENTER); // restore default
+    sk.pop();
+  }
+
+  // ── Analog clock overlay ──────────────────────────────────────────────────
+  // Clock face sits at radius ~295 (just inside Neptune's orbit).
+  // 12=Jan, 3=Apr, 6=Jul, 9=Oct. Hands driven by current date/time:
+  //   • Hour hand   = hour of day (0-12)
+  //   • Minute hand = minute
+  //   • "Month hand"= month of year (like a 12-month hand, bold, prominent)
+  //     rotated so Jan=top, same as the orbital calendar
+
+  function drawAnalogClock(sk, primaryDays, rotOff) {
+    const isAncient = customDaysSinceJ2000 !== null && Math.abs(customDaysSinceJ2000 / 365.25) > 100000;
+    const live = isAncient ? null
+               : (customDaysSinceJ2000 === null ? new Date() : new Date(J2000().getTime() + primaryDays * 86400000));
+
+    // For ancient dates, derive fractional month from orbit position; hour/minute = 0
+    let hour, minute, month;
+    if (live) {
+      hour   = live.getHours() % 12 + live.getMinutes()/60;
+      minute = live.getMinutes() + live.getSeconds()/60;
+      month  = live.getMonth() + live.getDate()/31;
+    } else {
+      hour   = 0; minute = 0;
+      // Derive month from fractional year offset
+      const fracYear = (primaryDays / 365.25) % 1;
+      month = ((fracYear < 0 ? fracYear + 1 : fracYear) * 12);
+    }
+
+    // Clock face radius — just inside outermost label ring (Neptune radius=388, labels at ~470)
+    const faceR = 440;
+
+    // ── Outer bezel ring ──
+    sk.noFill(); sk.stroke(60, 60, 100, 80); sk.strokeWeight(1.5);
+    sk.ellipse(0, 0, faceR*2, faceR*2);
+    // Subtle inner glow ring
+    sk.stroke(80, 80, 140, 30); sk.strokeWeight(6);
+    sk.ellipse(0, 0, faceR*2, faceR*2);
+    sk.strokeWeight(1);
+
+    // ── Hour markers + cardinal numerals ──
+    const cardinals = { 0:'XII', 3:'III', 6:'VI', 9:'IX' };
+    // (Season labels removed — month names are already shown by the calendar overlay)
+
+    for (let i = 0; i < 12; i++) {
+      const a = (i / 12) * Math.PI * 2 - Math.PI/2;
+      const cx2 = Math.cos(a), cy2 = Math.sin(a);
+      const isQ = (i % 3 === 0);
+
+      // Major / minor tick
+      sk.stroke(isQ ? 160 : 70, isQ ? 160 : 70, isQ ? 230 : 120, isQ ? 130 : 50);
+      sk.strokeWeight(isQ ? 1.5 : 0.8);
+      sk.line(cx2*(faceR-12), cy2*(faceR-12), cx2*(faceR-2), cy2*(faceR-2));
+
+      // Minor ticks (5 per hour)
+      for (let t = 1; t < 5; t++) {
+        const ta = a + (t/5)*(Math.PI*2/12);
+        sk.stroke(50, 50, 90, 40); sk.strokeWeight(0.5);
+        sk.line(Math.cos(ta)*(faceR-5), Math.sin(ta)*(faceR-5),
+                Math.cos(ta)*(faceR-2), Math.sin(ta)*(faceR-2));
+      }
+
+      // Cardinal numerals — drawn inside the face, just inside the tick ring
+      if (isQ) {
+        const numR = faceR - 22;
+        const nx = cx2 * numR, ny = cy2 * numR;
+
+        // Numeral glow
+        sk.noStroke();
+        sk.fill(120, 100, 255, 18);
+        sk.textSize(13); sk.textFont('Georgia');
+        for (let dx=-2; dx<=2; dx++) for (let dy=-2; dy<=2; dy++)
+          sk.text(cardinals[i], nx+dx, ny+dy);
+
+        // Numeral — elegant off-white with violet tint
+        sk.fill(195, 190, 240, 210);
+        sk.textSize(13); sk.textFont('Georgia');
+        sk.text(cardinals[i], nx, ny);
+      }
+    }
+    sk.strokeWeight(1);
+
+    // Clock hand helper: draws from center outward at angle `a`
+    function clockHand(length, weight, r, g, b, alpha, capR=3) {
+      sk.stroke(r, g, b, alpha); sk.strokeWeight(weight);
+      sk.line(0, 0, Math.cos(sk.radians(-90) + sk.radians(0)) * 0, 0); // reset
+    }
+
+    // Angle converter: clock-style, 0=top, clockwise
+    function clockAngle(fraction) { return fraction * Math.PI * 2 - Math.PI/2; }
+
+    // ── Month hand (thick, glowing, long — like a year pointer) ──
+    // month goes 0–12 clockwise starting at top (Jan)
+    const monthA = clockAngle(month / 12);
+    const mLen = faceR * 0.82;
+    // Glow
+    for (let g2 = 3; g2 >= 1; g2--) {
+      sk.stroke(180, 100, 255, 40/g2); sk.strokeWeight(g2*4);
+      sk.line(0, 0, Math.cos(monthA)*mLen, Math.sin(monthA)*mLen);
+    }
+    sk.stroke(200, 130, 255, 200); sk.strokeWeight(2);
+    sk.line(0, 0, Math.cos(monthA)*mLen, Math.sin(monthA)*mLen);
+    // Arrow tip
+    sk.fill(200, 130, 255, 200); sk.noStroke();
+    sk.ellipse(Math.cos(monthA)*mLen, Math.sin(monthA)*mLen, 5, 5);
+
+    // ── Hour hand ──
+    const hourA = clockAngle(hour / 12);
+    const hLen = faceR * 0.38;
+    sk.stroke(200, 220, 255, 200); sk.strokeWeight(3);
+    sk.line(0, 0, Math.cos(hourA)*hLen, Math.sin(hourA)*hLen);
+    // Counterweight
+    sk.stroke(200, 220, 255, 80); sk.strokeWeight(2);
+    sk.line(0, 0, Math.cos(hourA+Math.PI)*(hLen*0.2), Math.sin(hourA+Math.PI)*(hLen*0.2));
+
+    // ── Minute hand ──
+    const minA = clockAngle(minute / 60);
+    const mhLen = faceR * 0.55;
+    sk.stroke(150, 200, 255, 160); sk.strokeWeight(1.5);
+    sk.line(0, 0, Math.cos(minA)*mhLen, Math.sin(minA)*mhLen);
+    sk.stroke(150, 200, 255, 50); sk.strokeWeight(1);
+    sk.line(0, 0, Math.cos(minA+Math.PI)*(mhLen*0.15), Math.sin(minA+Math.PI)*(mhLen*0.15));
+
+    // ── Second hand (only if live) ──
+    if (customDaysSinceJ2000 === null) {
+      const sec = new Date().getSeconds() + new Date().getMilliseconds()/1000;
+      const secA = clockAngle(sec / 60);
+      const sLen = faceR * 0.65;
+      sk.stroke(255, 80, 80, 180); sk.strokeWeight(1);
+      sk.line(0, 0, Math.cos(secA)*sLen, Math.sin(secA)*sLen);
+      sk.stroke(255, 80, 80, 80); sk.strokeWeight(1);
+      sk.line(0, 0, Math.cos(secA+Math.PI)*(sLen*0.18), Math.sin(secA+Math.PI)*(sLen*0.18));
+    }
+
+    // ── Center cap ──
+    sk.noStroke(); sk.fill(80, 80, 140); sk.ellipse(0, 0, 8, 8);
+    sk.fill(160, 160, 220); sk.ellipse(0, 0, 4, 4);
+  }
+
+  // ── Calendar overlay (month ticks + quarter lines) ────────────────────────
+  // (MONTHS, QUARTER_COLORS, quarterIdx declared above)
+
+  function drawCalendarOverlay(sk, primaryDays, rotOff) {
+    const year = new Date(J2000().getTime() + primaryDays * 86400000).getFullYear();
+    const tickInner = 460, tickOuter = 474, labelR = 488;
+
+    // Month angles from Earth's orbit
+    const monthAngles = [];
+    for (let mo = 1; mo <= 12; mo++) {
+      monthAngles.push(drawAngle(daysFromDate(year, mo, 1), PLANETS[2], rotOff));
+    }
+
+    // Quarter shaded arcs
+    for (let qi = 0; qi < 4; qi++) {
+      const startA = monthAngles[quarterIdx[qi]];
+      const endA   = monthAngles[quarterIdx[(qi+1)%4]] + (qi===3 ? Math.PI*2 : 0);
+      const [r,g,b] = QUARTER_COLORS[qi];
+      sk.noFill(); sk.stroke(r,g,b, 18); sk.strokeWeight(14);
+      sk.arc(0,0, tickInner*2, tickInner*2, startA, endA);
+      sk.strokeWeight(1);
+    }
+
+    // Quarter divider lines — draw from center outward along the month angle,
+    // stopping just inside the tick ring (no full-diameter cross, no misalignment with XII/III/VI/IX)
+    quarterIdx.forEach((mi, qi) => {
+      const a = monthAngles[mi];
+      const [r,g,b] = QUARTER_COLORS[qi];
+      // Fade from near-transparent at center to slightly more visible near the rim
+      sk.stroke(r,g,b, 30); sk.strokeWeight(1);
+      sk.line(0, 0, Math.cos(a)*(tickInner-8), Math.sin(a)*(tickInner-8));
+    });
+
+    // Month ticks + labels
+    for (let mi = 0; mi < 12; mi++) {
+      const a = monthAngles[mi];
+      const cx2 = Math.cos(a), cy2 = Math.sin(a);
+      const isQ = quarterIdx.includes(mi);
+      const qi  = quarterIdx.indexOf(mi);
+      const [r,g,b] = isQ ? QUARTER_COLORS[qi] : [110,110,140];
+      const alpha    = isQ ? 210 : 100;
+
+      sk.stroke(r,g,b,alpha); sk.strokeWeight(isQ?2:1);
+      sk.line(cx2*(isQ?tickInner-5:tickInner), cy2*(isQ?tickInner-5:tickInner),
+              cx2*(isQ?tickOuter+5:tickOuter), cy2*(isQ?tickOuter+5:tickOuter));
+      sk.strokeWeight(1);
+
+      sk.fill(r,g,b,alpha); sk.noStroke();
+      sk.textSize(isQ?12:9); sk.textFont('Georgia');
+      sk.text(MONTHS[mi], cx2*labelR, cy2*labelR);
+    }
+  }
+
 });
 </script>
 </body>
