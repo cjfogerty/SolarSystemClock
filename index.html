@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Solar System Clock</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
@@ -110,8 +111,17 @@
     .scan-dir-btn { flex:1; }
     .active-dir { border-color:#3a3a6a !important; color:#aaf !important; background:#12122a !important; }
 
-    #canvas-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; }
-    canvas { border-radius: 6px; display: block; }
+    #canvas-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    canvas { border-radius: 6px; display: block; max-width: 100%; max-height: 100vh; }
+
+    /* Mobile: stack sidebar below canvas */
+    @media (max-width: 700px) {
+      body { flex-direction: column; align-items: stretch; padding: 6px; gap: 6px; }
+      #sidebar { width: 100%; flex-direction: column; }
+      #canvas-wrap { align-items: center; }
+      canvas { max-height: 60vh; }
+      button, input { min-height: 36px; font-size: 16px; }
+    }
 
     /* Accordion */
     .accordion-panel { }
@@ -916,10 +926,33 @@ document.getElementById('simScanBtn').addEventListener('click', () => {
 
 // ─── p5 sketch ────────────────────────────────────────────────────────────────
 new p5(function(sk) {
+  // Base coordinate space — all drawing uses these constants.
+  // scaleFactor maps them to the actual canvas pixel size.
   const W = 1000, H = 1000;
   const CX = W/2, CY = H/2;
+  let canvasSize = 1000;
+  let scaleFactor = 1.0;
 
-  // Starfield
+  function computeCanvasSize() {
+    const isMobile = window.innerWidth <= 700;
+    let availW, availH;
+    if (isMobile) {
+      // Mobile: canvas takes full width, ~60vh height
+      availW = window.innerWidth - 12;
+      availH = window.innerHeight * 0.60;
+    } else {
+      // Desktop: sidebar is beside canvas; subtract sidebar width + gaps
+      const sidebarEl = document.getElementById('sidebar');
+      const sidebarW = sidebarEl ? sidebarEl.getBoundingClientRect().width + 18 : 288;
+      availW = window.innerWidth - sidebarW;
+      availH = window.innerHeight - 20; // body padding
+    }
+    canvasSize = Math.min(availW * 0.97, availH * 0.97, 1000);
+    canvasSize = Math.max(canvasSize, 300); // minimum viable size
+    scaleFactor = canvasSize / 1000;
+  }
+
+  // Starfield — positions are in base-1000 coords; scale() handles the rest
   const STARS = [];
   for (let i = 0; i < 380; i++) {
     STARS.push({
@@ -941,15 +974,22 @@ new p5(function(sk) {
   const quarterIdx = [0, 3, 6, 9];
 
   sk.setup = function() {
-    sk.createCanvas(W, H).parent('canvas-wrap');
+    computeCanvasSize();
+    sk.createCanvas(canvasSize, canvasSize).parent('canvas-wrap');
     sk.textAlign(sk.CENTER, sk.CENTER);
     sk.loop();
+  };
+
+  sk.windowResized = function() {
+    computeCanvasSize();
+    sk.resizeCanvas(canvasSize, canvasSize);
   };
 
   sk.draw = function() {
     // Deep space background
     sk.background(4, 4, 8);
-    sk.translate(CX, CY);
+    sk.translate(CX * scaleFactor, CY * scaleFactor);
+    sk.scale(scaleFactor); // all base-1000 coordinates now render at any canvas size
 
     const primaryDays = getPrimaryDays();
     const rotOff = getCanvasRotationOffset(primaryDays);
@@ -1195,7 +1235,8 @@ new p5(function(sk) {
 
     sk.push();
     sk.resetMatrix();
-    sk.translate(CX, CY); // re-center since we reset
+    sk.translate(CX * scaleFactor, CY * scaleFactor); // re-center accounting for scale
+    sk.scale(scaleFactor);
 
     // Glassmorphism panel
     sk.noStroke();
@@ -1265,14 +1306,18 @@ new p5(function(sk) {
     sk.ellipse(0, 0, faceR*2, faceR*2);
     sk.strokeWeight(1);
 
-    // ── Hour markers + cardinal numerals ──
-    const cardinals = { 0:'XII', 3:'III', 6:'VI', 9:'IX' };
-    // (Season labels removed — month names are already shown by the calendar overlay)
+    // ── Hour markers + numerals ──
+    // All 12 Arabic numerals shown: quarter hours (12,3,6,9) are large+bold+white
+    // (PRIMARY), non-quarters are medium+dimmed (SECONDARY). Month abbreviations
+    // sit just outside the numeral ring as TERTIARY labels.
+    const CLOCK_MONTHS = ['JAN','FEB','MAR','APR','MAY','JUN',
+                          'JUL','AUG','SEP','OCT','NOV','DEC'];
 
     for (let i = 0; i < 12; i++) {
       const a = (i / 12) * Math.PI * 2 - Math.PI/2;
       const cx2 = Math.cos(a), cy2 = Math.sin(a);
-      const isQ = (i % 3 === 0);
+      const isQ = (i % 3 === 0); // quarter hours: 12, 3, 6, 9
+      const clockNum = (i === 0) ? 12 : i;
 
       // Major / minor tick
       sk.stroke(isQ ? 160 : 70, isQ ? 160 : 70, isQ ? 230 : 120, isQ ? 130 : 50);
@@ -1287,25 +1332,37 @@ new p5(function(sk) {
                 Math.cos(ta)*(faceR-2), Math.sin(ta)*(faceR-2));
       }
 
-      // Cardinal numerals — drawn inside the face, just inside the tick ring
+      // ── Arabic numerals — ALL 12, primary visual hierarchy ──
+      const numR = faceR - (isQ ? 26 : 22);
+      const nx = cx2 * numR, ny = cy2 * numR;
+      sk.noStroke();
+
       if (isQ) {
-        const numR = faceR - 22;
-        const nx = cx2 * numR, ny = cy2 * numR;
-
-        // Numeral glow
-        sk.noStroke();
-        sk.fill(120, 100, 255, 18);
-        sk.textSize(13); sk.textFont('Georgia');
+        // Quarter hours (12, 3, 6, 9): large, bold, full white — PRIMARY
+        // Soft violet glow halo behind numeral
+        sk.fill(200, 190, 255, 22);
+        sk.textSize(22); sk.textStyle(sk.BOLD); sk.textFont('Georgia');
         for (let dx=-2; dx<=2; dx++) for (let dy=-2; dy<=2; dy++)
-          sk.text(cardinals[i], nx+dx, ny+dy);
-
-        // Numeral — elegant off-white with violet tint
-        sk.fill(195, 190, 240, 210);
-        sk.textSize(13); sk.textFont('Georgia');
-        sk.text(cardinals[i], nx, ny);
+          sk.text(String(clockNum), nx+dx, ny+dy);
+        sk.fill(255, 255, 255, 245);
+        sk.textSize(22); sk.textStyle(sk.BOLD); sk.textFont('Georgia');
+        sk.text(String(clockNum), nx, ny);
+      } else {
+        // Non-quarter hours (1,2,4,5,7,8,10,11): medium, normal — SECONDARY
+        sk.fill(190, 188, 230, 175);
+        sk.textSize(14); sk.textStyle(sk.NORMAL); sk.textFont('Georgia');
+        sk.text(String(clockNum), nx, ny);
       }
+      sk.textStyle(sk.NORMAL); // reset after each numeral
+
+      // ── Month abbreviation — TERTIARY, outside the numeral ring ──
+      const moR = faceR + 16;
+      const mx = cx2 * moR, my = cy2 * moR;
+      sk.fill(isQ ? 160 : 100, isQ ? 158 : 100, isQ ? 210 : 145, isQ ? 190 : 110);
+      sk.textSize(isQ ? 11 : 9); sk.textStyle(sk.NORMAL); sk.textFont('Arial');
+      sk.text(CLOCK_MONTHS[i], mx, my);
     }
-    sk.strokeWeight(1);
+    sk.strokeWeight(1); sk.textFont('Georgia');
 
     // Clock hand helper: draws from center outward at angle `a`
     function clockHand(length, weight, r, g, b, alpha, capR=3) {
