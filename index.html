@@ -6,6 +6,7 @@
   <title>Solar System Clock</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
+<<<<<<< HEAD
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -191,6 +192,28 @@
       margin-bottom: 7px; box-sizing: border-box;
     }
     #histSearch::placeholder { color: #334; }
+=======
+    body {
+      margin: 0;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      background: black;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    canvas {
+      border: 1px solid #333;
+      /* keep canvas crisp at higher pixel densities */
+      image-rendering: auto;
+    }
+    #controls { margin-bottom: 10px; }
+    #controls input { margin: 5px; padding: 5px; }
+    #controls button { padding: 5px 10px; }
+    #error { color: red; display: none; }
+>>>>>>> d913c72 (Improve canvas text clarity and DPI)
   </style>
 </head>
 <body>
@@ -336,11 +359,21 @@ let compareDaysSinceJ2000 = null;
 let planetSettings = {};
 PLANETS.forEach(p => { planetSettings[p.name] = { enabled: true, tolerance: 80 }; });
 
+<<<<<<< HEAD
 function J2000() { return new Date(2000, 0, 1, 12, 0, 0); }
 function daysFromDate(year, month, day, h=12, m=0) {
   return (new Date(year, month-1, day, h, m, 0) - J2000()) / 86400000;
 }
 function nowDays() { return (new Date() - J2000()) / 86400000; }
+=======
+function setup() {
+  const d = window.devicePixelRatio || 1;
+  pixelDensity(d);
+
+  createCanvas(1000, 1000);
+  textAlign(CENTER, CENTER);
+  textSize(16);
+>>>>>>> d913c72 (Improve canvas text clarity and DPI)
 
 function helioLong(days, planet) {
   const L0 = EPOCH_LONG[planet.name] || 0;
@@ -372,9 +405,52 @@ function drawAngle(days, planet, rotOffset) {
   return (Math.PI * 2 * days) / planet.period + rotOffset;
 }
 
+<<<<<<< HEAD
 function daysToDateStr(days) {
   return new Date(J2000().getTime() + days * 86400000)
     .toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
+=======
+function draw() {
+  background(0);
+  translate(width / 2, height / 2);
+
+  // Draw Sun
+  fill(255, 255, 0);
+  noStroke();
+  ellipse(0, 0, 30, 30);
+
+  // Use custom date or current time
+  let daysSinceJ2000 = customDaysSinceJ2000;
+  if (daysSinceJ2000 === null) {
+    let now = new Date();
+    let j2000 = new Date(2000, 0, 1, 12, 0, 0);
+    daysSinceJ2000 = (now - j2000) / (1000 * 60 * 60 * 24);
+  }
+
+  // Draw orbits and planets
+  for (let planet of planets) {
+    // Draw orbit
+    noFill();
+    stroke(255, 50);
+    ellipse(0, 0, planet.radius * 2, planet.radius * 2);
+
+    // Calculate planet position
+    let angle = (TWO_PI * daysSinceJ2000 / planet.period) % TWO_PI;
+    let x = planet.radius * cos(angle);
+    let y = planet.radius * sin(angle);
+
+    // Draw planet
+    fill(...planet.color);
+    noStroke();
+    ellipse(x, y, planet.size, planet.size);
+
+    // Draw label with subtle halo for clarity
+    fill(0, 0, 0, 180);
+    text(planet.name, x + 1, y + planet.size + 13);
+    fill(255);
+    text(planet.name, x, y + planet.size + 12);
+  }
+>>>>>>> d913c72 (Improve canvas text clarity and DPI)
 }
 function daysToInputVal(days) {
   const d = new Date(J2000().getTime() + days * 86400000);
