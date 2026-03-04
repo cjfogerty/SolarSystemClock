@@ -6,7 +6,6 @@
   <title>Solar System Clock</title>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.2/p5.min.js"></script>
   <style>
-<<<<<<< HEAD
     * { box-sizing: border-box; }
     body {
       margin: 0;
@@ -192,28 +191,6 @@
       margin-bottom: 7px; box-sizing: border-box;
     }
     #histSearch::placeholder { color: #334; }
-=======
-    body {
-      margin: 0;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      height: 100vh;
-      background: black;
-      color: white;
-      font-family: Arial, sans-serif;
-    }
-    canvas {
-      border: 1px solid #333;
-      /* keep canvas crisp at higher pixel densities */
-      image-rendering: auto;
-    }
-    #controls { margin-bottom: 10px; }
-    #controls input { margin: 5px; padding: 5px; }
-    #controls button { padding: 5px 10px; }
-    #error { color: red; display: none; }
->>>>>>> d913c72 (Improve canvas text clarity and DPI)
   </style>
 </head>
 <body>
@@ -359,21 +336,11 @@ let compareDaysSinceJ2000 = null;
 let planetSettings = {};
 PLANETS.forEach(p => { planetSettings[p.name] = { enabled: true, tolerance: 80 }; });
 
-<<<<<<< HEAD
 function J2000() { return new Date(2000, 0, 1, 12, 0, 0); }
 function daysFromDate(year, month, day, h=12, m=0) {
   return (new Date(year, month-1, day, h, m, 0) - J2000()) / 86400000;
 }
 function nowDays() { return (new Date() - J2000()) / 86400000; }
-=======
-function setup() {
-  const d = window.devicePixelRatio || 1;
-  pixelDensity(d);
-
-  createCanvas(1000, 1000);
-  textAlign(CENTER, CENTER);
-  textSize(16);
->>>>>>> d913c72 (Improve canvas text clarity and DPI)
 
 function helioLong(days, planet) {
   const L0 = EPOCH_LONG[planet.name] || 0;
@@ -405,52 +372,9 @@ function drawAngle(days, planet, rotOffset) {
   return (Math.PI * 2 * days) / planet.period + rotOffset;
 }
 
-<<<<<<< HEAD
 function daysToDateStr(days) {
   return new Date(J2000().getTime() + days * 86400000)
     .toLocaleDateString('en-US', { year:'numeric', month:'short', day:'numeric' });
-=======
-function draw() {
-  background(0);
-  translate(width / 2, height / 2);
-
-  // Draw Sun
-  fill(255, 255, 0);
-  noStroke();
-  ellipse(0, 0, 30, 30);
-
-  // Use custom date or current time
-  let daysSinceJ2000 = customDaysSinceJ2000;
-  if (daysSinceJ2000 === null) {
-    let now = new Date();
-    let j2000 = new Date(2000, 0, 1, 12, 0, 0);
-    daysSinceJ2000 = (now - j2000) / (1000 * 60 * 60 * 24);
-  }
-
-  // Draw orbits and planets
-  for (let planet of planets) {
-    // Draw orbit
-    noFill();
-    stroke(255, 50);
-    ellipse(0, 0, planet.radius * 2, planet.radius * 2);
-
-    // Calculate planet position
-    let angle = (TWO_PI * daysSinceJ2000 / planet.period) % TWO_PI;
-    let x = planet.radius * cos(angle);
-    let y = planet.radius * sin(angle);
-
-    // Draw planet
-    fill(...planet.color);
-    noStroke();
-    ellipse(x, y, planet.size, planet.size);
-
-    // Draw label with subtle halo for clarity
-    fill(0, 0, 0, 180);
-    text(planet.name, x + 1, y + planet.size + 13);
-    fill(255);
-    text(planet.name, x, y + planet.size + 12);
-  }
->>>>>>> d913c72 (Improve canvas text clarity and DPI)
 }
 function daysToInputVal(days) {
   const d = new Date(J2000().getTime() + days * 86400000);
@@ -765,7 +689,6 @@ renderHistList('');
     sidebar.classList.toggle('collapsed', collapsed);
     btn.textContent = collapsed ? '▶' : '◀';
     btn.title = collapsed ? 'Show sidebar' : 'Hide sidebar';
-    // Trigger canvas resize after transition finishes
     setTimeout(() => {
       if (typeof window._p5ResizeFn === 'function') window._p5ResizeFn();
       window.dispatchEvent(new Event('resize'));
@@ -852,7 +775,7 @@ document.getElementById('simScanBtn').addEventListener('click', () => {
 // p5 SKETCH
 // ─────────────────────────────────────────────────────────────────────────────
 new p5(function(sk) {
-  const BASE = 1100; // base coordinate space — all geometry defined in these units
+  const BASE = 1100;
   const W = BASE, H = BASE, CX = W/2, CY = H/2;
   let canvasSize = BASE, scaleFactor = 1.0;
 
@@ -864,10 +787,9 @@ new p5(function(sk) {
       const sidebarEl = document.getElementById('sidebar');
       const sidebarCollapsed = sidebarEl && sidebarEl.classList.contains('collapsed');
       const sidebarW = (sidebarEl && !sidebarCollapsed) ? sidebarEl.getBoundingClientRect().width + 18 : 0;
-      availW = window.innerWidth - sidebarW - 24; // 24 = padding-left for toggle tab
+      availW = window.innerWidth - sidebarW - 24;
       availH = window.innerHeight - 20;
     }
-    // No upper cap — let the canvas fill all available space
     canvasSize = Math.max(Math.min(availW * 0.98, availH * 0.98), 300);
     scaleFactor = canvasSize / BASE;
   }
@@ -877,19 +799,19 @@ new p5(function(sk) {
     STARS.push({ x: Math.random()*W - W/2, y: Math.random()*H - H/2, r: Math.random()*1.4 + 0.2, a: Math.random()*180 + 60 });
   }
 
-  // Month abbreviations — used ONLY in drawCalendarOverlay
   const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-  // Quarter months: indices 0=Jan, 3=Apr, 6=Jul, 9=Oct
   const QUARTER_COLORS = [
-    [100,160,255],  // Jan  — blue
-    [ 80,210, 80],  // Apr  — green
-    [255,160, 60],  // Jul  — amber
-    [200,100,255],  // Oct  — violet
+    [100,160,255],
+    [ 80,210, 80],
+    [255,160, 60],
+    [200,100,255],
   ];
   const quarterIdx = [0, 3, 6, 9];
 
   sk.setup = function() {
     computeCanvasSize();
+    const d = window.devicePixelRatio || 1;
+    sk.pixelDensity(d);
     sk.createCanvas(canvasSize, canvasSize).parent('canvas-wrap');
     sk.textAlign(sk.CENTER, sk.CENTER);
     sk.loop();
@@ -905,7 +827,6 @@ new p5(function(sk) {
     const rotOff = getCanvasRotationOffset(primaryDays);
 
     drawStars(sk);
-    // Calendar ring drawn first (outermost), then clock face inside it
     drawCalendarOverlay(sk, primaryDays, rotOff);
     drawAnalogClock(sk, primaryDays, rotOff);
     drawSun(sk);
@@ -917,7 +838,6 @@ new p5(function(sk) {
     updateAlignmentStatus(primaryDays);
   };
 
-  // ── Starfield ──────────────────────────────────────────────────────────────
   function drawStars(sk) {
     sk.noStroke();
     STARS.forEach(s => {
@@ -927,7 +847,6 @@ new p5(function(sk) {
     });
   }
 
-  // ── Sun ────────────────────────────────────────────────────────────────────
   function drawSun(sk) {
     for (let i = 8; i >= 1; i--) { sk.noStroke(); sk.fill(255, 200, 30, 12 - i*1.2); sk.ellipse(0, 0, (28 + i*10)*2, (28 + i*10)*2); }
     for (let i = 28; i >= 1; i--) {
@@ -938,7 +857,6 @@ new p5(function(sk) {
     sk.fill(255, 255, 220); sk.ellipse(0, 0, 10, 10);
   }
 
-  // ── Planet orb ────────────────────────────────────────────────────────────
   function drawPlanetOrb(sk, x, y, p, alpha) {
     const s = p.size; const [r,g,b] = p.color; const [gr,gg,gb] = p.glowColor;
     for (let i = 4; i >= 1; i--) { sk.noStroke(); sk.fill(gr, gg, gb, (alpha * 0.18) / i); sk.ellipse(x, y, (s + i*5)*2, (s + i*5)*2); }
@@ -956,7 +874,6 @@ new p5(function(sk) {
     }
   }
 
-  // ── Draw all planets ───────────────────────────────────────────────────────
   const primaryPos = {};
   function drawPlanets(sk, days, primaryDays, rotOff, isCompare) {
     PLANETS.forEach((p, i) => {
@@ -994,7 +911,6 @@ new p5(function(sk) {
     });
   }
 
-  // ── Digital clock ─────────────────────────────────────────────────────────
   function drawDigitalClock(sk, primaryDays) {
     const isAncient = customDaysSinceJ2000 !== null && Math.abs(customDaysSinceJ2000 / 365.25) > 100000;
     const live = (!isAncient && customDaysSinceJ2000 === null) ? new Date() : (!isAncient ? new Date(J2000().getTime() + primaryDays * 86400000) : null);
@@ -1025,11 +941,6 @@ new p5(function(sk) {
     sk.textAlign(sk.CENTER, sk.CENTER); sk.pop();
   }
 
-  // ── Analog clock ──────────────────────────────────────────────────────────
-  // Draws clock face with hour numerals (1–12) and clock hands ONLY.
-  // *** Month labels are NOT drawn here — they live exclusively in drawCalendarOverlay ***
-  // Cardinal months (Jan/Apr/Jul/Oct) therefore appear exactly once on the visual.
-
   function drawAnalogClock(sk, primaryDays, rotOff) {
     const isAncient = customDaysSinceJ2000 !== null && Math.abs(customDaysSinceJ2000 / 365.25) > 100000;
     const live = isAncient ? null : (customDaysSinceJ2000 === null ? new Date() : new Date(J2000().getTime() + primaryDays * 86400000));
@@ -1039,46 +950,37 @@ new p5(function(sk) {
 
     const faceR = 440;
 
-    // Outer bezel ring
     sk.noFill(); sk.stroke(60, 60, 100, 80); sk.strokeWeight(1.5); sk.ellipse(0, 0, faceR*2, faceR*2);
     sk.stroke(80, 80, 140, 30); sk.strokeWeight(6); sk.ellipse(0, 0, faceR*2, faceR*2); sk.strokeWeight(1);
 
-    // Hour numerals and tick marks — clock numbers 1–12 only, NO month text
     for (let i = 0; i < 12; i++) {
       const a = (i / 12) * Math.PI * 2 - Math.PI/2;
       const cx2 = Math.cos(a), cy2 = Math.sin(a);
-      const isQ = (i % 3 === 0);  // quarter-hour positions: 12, 3, 6, 9
+      const isQ = (i % 3 === 0);
       const clockNum = i === 0 ? 12 : i;
 
-      // Tick marks
       sk.stroke(isQ ? 190 : 95, isQ ? 190 : 95, isQ ? 250 : 150, isQ ? 180 : 80);
       sk.strokeWeight(isQ ? 2.5 : 1.2);
       sk.line(cx2*(faceR-16), cy2*(faceR-16), cx2*(faceR-2), cy2*(faceR-2));
 
-      // Minor 5-minute ticks
       for (let t = 1; t < 5; t++) {
         const ta = a + (t/5)*(Math.PI*2/12);
         sk.stroke(50, 50, 90, 40); sk.strokeWeight(0.5);
         sk.line(Math.cos(ta)*(faceR-6), Math.sin(ta)*(faceR-6), Math.cos(ta)*(faceR-2), Math.sin(ta)*(faceR-2));
       }
 
-      // Clock numerals — all 12, with dark pill backgrounds for contrast
       const numR = faceR - (isQ ? 30 : 23);
       const nx = cx2 * numR, ny = cy2 * numR;
       sk.noStroke();
 
       if (isQ) {
-        // Quarter hours (12, 3, 6, 9): large, bold white on dark pill
         sk.fill(5, 5, 20, 210);
         sk.rect(nx - 14, ny - 12, 28, 24, 6);
-        // Glow halo
         sk.fill(230, 220, 255, 22); sk.textSize(24); sk.textStyle(sk.BOLD); sk.textFont('Georgia');
         for (let dx=-2; dx<=2; dx++) for (let dy=-2; dy<=2; dy++) sk.text(String(clockNum), nx+dx, ny+dy);
-        // Crisp white
         sk.fill(255, 255, 255, 255); sk.textSize(24); sk.textStyle(sk.BOLD); sk.textFont('Georgia');
         sk.text(String(clockNum), nx, ny);
       } else {
-        // Non-quarter hours: medium, light with subtle dark pill
         sk.fill(5, 5, 20, 170);
         sk.rect(nx - 10, ny - 9, 20, 18, 4);
         sk.fill(215, 212, 245, 230); sk.textSize(15); sk.textStyle(sk.NORMAL); sk.textFont('Georgia');
@@ -1090,26 +992,22 @@ new p5(function(sk) {
 
     function clockAngle(frac) { return frac * Math.PI * 2 - Math.PI/2; }
 
-    // Month hand (purple glow)
     const monthA = clockAngle(month / 12);
     const mLen = faceR * 0.82;
     for (let g2 = 3; g2 >= 1; g2--) { sk.stroke(180, 100, 255, 40/g2); sk.strokeWeight(g2*4); sk.line(0, 0, Math.cos(monthA)*mLen, Math.sin(monthA)*mLen); }
     sk.stroke(200, 130, 255, 200); sk.strokeWeight(2); sk.line(0, 0, Math.cos(monthA)*mLen, Math.sin(monthA)*mLen);
     sk.fill(200, 130, 255, 200); sk.noStroke(); sk.ellipse(Math.cos(monthA)*mLen, Math.sin(monthA)*mLen, 5, 5);
 
-    // Hour hand
     const hourA = clockAngle(hour / 12);
     const hLen = faceR * 0.38;
     sk.stroke(220, 235, 255, 225); sk.strokeWeight(3); sk.line(0, 0, Math.cos(hourA)*hLen, Math.sin(hourA)*hLen);
     sk.stroke(200, 220, 255, 80); sk.strokeWeight(2); sk.line(0, 0, Math.cos(hourA+Math.PI)*(hLen*0.2), Math.sin(hourA+Math.PI)*(hLen*0.2));
 
-    // Minute hand
     const minA = clockAngle(minute / 60);
     const mhLen = faceR * 0.55;
     sk.stroke(160, 210, 255, 185); sk.strokeWeight(1.5); sk.line(0, 0, Math.cos(minA)*mhLen, Math.sin(minA)*mhLen);
     sk.stroke(150, 200, 255, 50); sk.strokeWeight(1); sk.line(0, 0, Math.cos(minA+Math.PI)*(mhLen*0.15), Math.sin(minA+Math.PI)*(mhLen*0.15));
 
-    // Second hand (live only)
     if (customDaysSinceJ2000 === null) {
       const sec = new Date().getSeconds() + new Date().getMilliseconds()/1000;
       const secA = clockAngle(sec / 60); const sLen = faceR * 0.65;
@@ -1117,16 +1015,9 @@ new p5(function(sk) {
       sk.stroke(255, 80, 80, 80); sk.strokeWeight(1); sk.line(0, 0, Math.cos(secA+Math.PI)*(sLen*0.18), Math.sin(secA+Math.PI)*(sLen*0.18));
     }
 
-    // Center cap
     sk.noStroke(); sk.fill(80, 80, 140); sk.ellipse(0, 0, 8, 8);
     sk.fill(160, 160, 220); sk.ellipse(0, 0, 4, 4);
   }
-
-  // ── Calendar overlay ──────────────────────────────────────────────────────
-  // This is the ONLY place month names are rendered on the canvas.
-  // Cardinal months (Jan, Apr, Jul, Oct) get high-contrast colored pill labels.
-  // Non-cardinal months get clearly readable mid-weight labels.
-  // Result: each of the 12 month names appears exactly once.
 
   function drawCalendarOverlay(sk, primaryDays, rotOff) {
     const year = new Date(J2000().getTime() + primaryDays * 86400000).getFullYear();
@@ -1137,7 +1028,6 @@ new p5(function(sk) {
       monthAngles.push(drawAngle(daysFromDate(year, mo, 1), PLANETS[2], rotOff));
     }
 
-    // Quarter shaded arcs
     for (let qi = 0; qi < 4; qi++) {
       const startA = monthAngles[quarterIdx[qi]];
       const endA   = monthAngles[quarterIdx[(qi+1)%4]] + (qi===3 ? Math.PI*2 : 0);
@@ -1147,7 +1037,6 @@ new p5(function(sk) {
       sk.strokeWeight(1);
     }
 
-    // Quarter divider lines
     quarterIdx.forEach((mi, qi) => {
       const a = monthAngles[mi]; const [r,g,b] = QUARTER_COLORS[qi];
       sk.stroke(r, g, b, 50); sk.strokeWeight(1.5);
@@ -1155,7 +1044,6 @@ new p5(function(sk) {
       sk.strokeWeight(1);
     });
 
-    // Month ticks + labels
     for (let mi = 0; mi < 12; mi++) {
       const a = monthAngles[mi];
       const cx2 = Math.cos(a), cy2 = Math.sin(a);
@@ -1163,7 +1051,6 @@ new p5(function(sk) {
       const isQ = qi !== -1;
       const [r, g, b] = isQ ? QUARTER_COLORS[qi] : [150, 150, 185];
 
-      // Tick mark
       sk.stroke(r, g, b, isQ ? 255 : 150);
       sk.strokeWeight(isQ ? 2.5 : 1.2);
       const t0 = isQ ? tickInner - 8 : tickInner;
@@ -1171,37 +1058,28 @@ new p5(function(sk) {
       sk.line(cx2*t0, cy2*t0, cx2*t1, cy2*t1);
       sk.strokeWeight(1);
 
-      // Month label at labelR
       const lx = cx2 * labelR, ly = cy2 * labelR;
       sk.noStroke();
 
       if (isQ) {
-        // Cardinal months: prominent pill background + bold colored text
         const pillW = 38, pillH = 22;
-        // Dark pill fill
         sk.fill(3, 3, 15, 235);
         sk.rect(lx - pillW/2, ly - pillH/2, pillW, pillH, 6);
-        // Colored border ring
         sk.noFill(); sk.stroke(r, g, b, 200); sk.strokeWeight(1.2);
         sk.rect(lx - pillW/2, ly - pillH/2, pillW, pillH, 6);
         sk.strokeWeight(1);
-        // Glow aura behind pill
         sk.noStroke(); sk.fill(r, g, b, 16); sk.ellipse(lx, ly, pillW + 18, pillH + 18);
-        // Bold month text — full saturation color
         sk.fill(r, g, b, 255);
         sk.textSize(14); sk.textStyle(sk.BOLD); sk.textFont('Georgia');
         sk.text(MONTHS[mi], lx, ly + 1);
         sk.textStyle(sk.NORMAL);
       } else {
-        // Non-cardinal months: pill + high-contrast white-tinted text
         const pillW = 32, pillH = 18;
         sk.fill(3, 3, 15, 210);
         sk.rect(lx - pillW/2, ly - pillH/2, pillW, pillH, 4);
-        // Subtle colored border so they don't look completely anonymous
         sk.noFill(); sk.stroke(r, g, b, 90); sk.strokeWeight(0.8);
         sk.rect(lx - pillW/2, ly - pillH/2, pillW, pillH, 4);
         sk.strokeWeight(1);
-        // Bright near-white text with a hint of the ring color
         sk.noStroke(); sk.fill(220, 220, 240, 255);
         sk.textSize(11); sk.textStyle(sk.NORMAL); sk.textFont('Georgia');
         sk.text(MONTHS[mi], lx, ly + 0.5);
