@@ -836,9 +836,15 @@ new p5(function(sk) {
     const primaryDays = getPrimaryDays();
     const rotOff = getCanvasRotationOffset(primaryDays);
 
+    const calYear = new Date(J2000().getTime() + primaryDays * 86400000).getFullYear();
+    const monthAngles = [];
+    for (let mo = 1; mo <= 12; mo++) {
+      monthAngles.push(drawAngle(daysFromDate(calYear, mo, 1), PLANETS[2], rotOff));
+    }
+
     drawStars(sk);
-    drawCalendarOverlay(sk, primaryDays, rotOff);
-    drawAnalogClock(sk, primaryDays, rotOff);
+    drawCalendarOverlay(sk, primaryDays, rotOff, monthAngles);
+    drawAnalogClock(sk, primaryDays, rotOff, monthAngles);
     drawSun(sk);
 
     if (compareDaysSinceJ2000 !== null) drawPlanets(sk, compareDaysSinceJ2000, primaryDays, rotOff, true);
@@ -951,7 +957,7 @@ new p5(function(sk) {
     sk.textAlign(sk.CENTER, sk.CENTER); sk.pop();
   }
 
-  function drawAnalogClock(sk, primaryDays, rotOff) {
+  function drawAnalogClock(sk, primaryDays, rotOff, monthAngles) {
     const isAncient = customDaysSinceJ2000 !== null && Math.abs(customDaysSinceJ2000 / 365.25) > 100000;
     const live = isAncient ? null : (customDaysSinceJ2000 === null ? new Date() : new Date(J2000().getTime() + primaryDays * 86400000));
     let hour, minute, month;
@@ -964,7 +970,7 @@ new p5(function(sk) {
     sk.stroke(80, 80, 140, 30); sk.strokeWeight(6); sk.ellipse(0, 0, faceR*2, faceR*2); sk.strokeWeight(1);
 
     for (let i = 0; i < 12; i++) {
-      const a = (i / 12) * Math.PI * 2 - Math.PI/2;
+      const a = monthAngles[i];
       const cx2 = Math.cos(a), cy2 = Math.sin(a);
       const isQ = (i % 3 === 0);
       const clockNum = i === 0 ? 12 : i;
@@ -1029,14 +1035,8 @@ new p5(function(sk) {
     sk.fill(160, 160, 220); sk.ellipse(0, 0, 4, 4);
   }
 
-  function drawCalendarOverlay(sk, primaryDays, rotOff) {
-    const year = new Date(J2000().getTime() + primaryDays * 86400000).getFullYear();
+  function drawCalendarOverlay(sk, primaryDays, rotOff, monthAngles) {
     const tickInner = 460, tickOuter = 480, labelR = 502;
-
-    const monthAngles = [];
-    for (let mo = 1; mo <= 12; mo++) {
-      monthAngles.push(drawAngle(daysFromDate(year, mo, 1), PLANETS[2], rotOff));
-    }
 
     for (let qi = 0; qi < 4; qi++) {
       const startA = monthAngles[quarterIdx[qi]];
