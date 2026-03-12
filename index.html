@@ -317,7 +317,7 @@ const PLANETS = [
   { name: "Jupiter", radius: 248, period: 4332.59,  color: [230,190,120], size: 22, glowColor: [255,215,155] },
   { name: "Saturn",  radius: 300, period: 10759.22, color: [210,185,140], size: 19, glowColor: [235,210,165] },
   { name: "Uranus",  radius: 346, period: 30688.5,  color: [100,230,220], size: 15, glowColor: [145,255,248] },
-  { name: "Neptune", radius: 388, period: 59800,    color: [ 80,100,230], size: 15, glowColor: [105,135,255] }
+  { name: "Neptune", radius: 388, period: 60190,    color: [ 80,100,230], size: 15, glowColor: [105,135,255] }
 ];
 
 const ORBIT_COLORS = [
@@ -365,11 +365,13 @@ function getCanvasRotationOffset(primaryDays) {
     const approxYear = primaryDays / 365.25;
     jan1Days = Math.floor(approxYear) * 365.25;
   }
-  const earthRawAtJan1 = (Math.PI * 2 * jan1Days) / PLANETS[2].period;
+  const L0earthRad = EPOCH_LONG['Earth'] * Math.PI / 180;
+  const earthRawAtJan1 = L0earthRad + (Math.PI * 2 * jan1Days) / PLANETS[2].period;
   return -Math.PI / 2 - earthRawAtJan1;
 }
 function drawAngle(days, planet, rotOffset) {
-  return (Math.PI * 2 * days) / planet.period + rotOffset;
+  const L0rad = (EPOCH_LONG[planet.name] || 0) * Math.PI / 180;
+  return L0rad + (Math.PI * 2 * days) / planet.period + rotOffset;
 }
 
 function daysToDateStr(days) {
