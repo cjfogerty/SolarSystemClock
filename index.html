@@ -30,10 +30,10 @@
     }
     .panel h3 {
       margin: 0 0 9px 0;
-      font-size: 10px;
+      font-size: 11px;
       text-transform: uppercase;
       letter-spacing: 0.14em;
-      color: #556;
+      color: #778;
       border-bottom: 1px solid #161622;
       padding-bottom: 6px;
       font-family: Arial, sans-serif;
@@ -41,19 +41,19 @@
     .date-row .inputs { display: flex; gap: 6px; margin-bottom: 6px; }
     input[type="date"], input[type="time"] {
       background: #0d0d16; border: 1px solid #252535; color: #aab;
-      padding: 5px 6px; border-radius: 5px; font-size: 12px; font-family: Arial, sans-serif;
+      padding: 5px 6px; border-radius: 5px; font-size: 13px; font-family: Arial, sans-serif;
     }
     input[type="date"] { flex: 2; }
     input[type="time"] { flex: 1; }
     .btn-row { display: flex; gap: 6px; }
     button {
       background: #0f0f1a; border: 1px solid #252535; color: #99a;
-      padding: 5px 8px; border-radius: 5px; cursor: pointer; font-size: 11px; flex: 1;
+      padding: 5px 8px; border-radius: 5px; cursor: pointer; font-size: 12px; flex: 1;
       font-family: Arial, sans-serif; transition: all 0.15s;
     }
     button:hover { background: #181828; border-color: #3a3a5a; color: #ccf; }
     .nav-row { display: flex; gap: 4px; margin-top: 6px; align-items: center; }
-    .nav-row label { font-size: 10px; color: #445; flex: 1; text-align: center; font-family: Arial, sans-serif; }
+    .nav-row label { font-size: 12px; color: #667; flex: 1; text-align: center; font-family: Arial, sans-serif; }
     .nav-btn {
       background: #0d0d1a; border: 1px solid #252535; color: #778;
       padding: 4px 0; border-radius: 5px; cursor: pointer; font-size: 13px;
@@ -61,9 +61,9 @@
     }
     .nav-btn:hover { background: #151525; color: #aac; border-color: #3a3a5a; }
     .nav-step { display: flex; gap: 4px; margin-top: 3px; }
-    .nav-step button { font-size: 10px; padding: 3px 0; flex: 1; color: #556; background: #0a0a14; border-color: #1a1a28; }
+    .nav-step button { font-size: 11px; padding: 3px 0; flex: 1; color: #778; background: #0a0a14; border-color: #1a1a28; }
     .nav-step button:hover { color: #99f; background: #111120; }
-    .err { color: #f87; font-size: 11px; display: none; margin-top: 4px; font-family: Arial, sans-serif; }
+    .err { color: #f87; font-size: 12px; display: none; margin-top: 4px; font-family: Arial, sans-serif; }
     .planet-row {
       display: flex; align-items: center; gap: 7px;
       margin-bottom: 7px; padding-bottom: 7px;
@@ -71,21 +71,21 @@
     }
     .planet-row:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
     .pdot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-    .planet-row label { font-size: 12px; flex: 1; cursor: pointer; color: #99a; font-family: Arial, sans-serif; }
+    .planet-row label { font-size: 13px; flex: 1; cursor: pointer; color: #aab; font-family: Arial, sans-serif; }
     .planet-row input[type="checkbox"] { cursor: pointer; accent-color: #66f; flex-shrink: 0; }
     .tol-wrap { display: flex; align-items: center; gap: 4px; flex-shrink: 0; }
     input[type="range"] { width: 60px; cursor: pointer; accent-color: #66f; }
-    .tol-val { font-size: 11px; color: #556; width: 32px; text-align: right; font-family: Arial, sans-serif; }
-    .astat { font-size: 12px; line-height: 1.8; font-family: Arial, sans-serif; }
+    .tol-val { font-size: 12px; color: #778; width: 32px; text-align: right; font-family: Arial, sans-serif; }
+    .astat { font-size: 13px; line-height: 1.8; font-family: Arial, sans-serif; }
     .astat .ok  { color: #5f5; }
-    .astat .no  { color: #334; }
-    #similarList { max-height: 155px; overflow-y: auto; font-size: 12px; scrollbar-width: thin; scrollbar-color: #222 #0a0a14; }
+    .astat .no  { color: #557; }
+    #similarList { max-height: 155px; overflow-y: auto; font-size: 13px; scrollbar-width: thin; scrollbar-color: #222 #0a0a14; }
     .sim-item { padding: 4px 6px; border-radius: 5px; cursor: pointer; border: 1px solid #181822; margin-bottom: 3px; transition: all 0.15s; }
     .sim-item:hover { background: #0f1f10; border-color: #2a4a2a; }
     .sim-item .sim-date { color: #8bf; font-weight: bold; font-family: Arial, sans-serif; }
-    .sim-item .sim-detail { color: #445; font-size: 10px; font-family: Arial, sans-serif; }
+    .sim-item .sim-detail { color: #667; font-size: 11px; font-family: Arial, sans-serif; }
     #simScanBtn { width: 100%; margin-bottom: 8px; }
-    #simStatus { font-size: 11px; color: #445; margin-bottom: 6px; font-family: Arial, sans-serif; }
+    #simStatus { font-size: 12px; color: #667; margin-bottom: 6px; font-family: Arial, sans-serif; }
     .scan-dir-btn { flex:1; }
     .active-dir { border-color:#3a3a6a !important; color:#aaf !important; background:#12122a !important; }
     #canvas-wrap { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; position: relative; min-width: 0; }
@@ -131,11 +131,11 @@
     }
     .accordion-header:hover .accordion-title { color: #99a; }
     .accordion-title {
-      font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em;
-      color: #556; font-family: Arial, sans-serif; transition: color 0.15s;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.14em;
+      color: #778; font-family: Arial, sans-serif; transition: color 0.15s;
     }
     .accordion-arrow {
-      font-size: 9px; color: #445; transition: transform 0.2s; display: inline-block;
+      font-size: 11px; color: #667; transition: transform 0.2s; display: inline-block;
     }
     .accordion-arrow.open { transform: rotate(90deg); }
     .accordion-body { overflow: hidden; max-height: 0; transition: max-height 0.25s ease; }
@@ -148,11 +148,11 @@
       margin-bottom: 4px; background: #08080f;
     }
     .saved-item-info { flex: 1; min-width: 0; }
-    .saved-item-title { font-size: 11px; color: #aab; font-family: Arial, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .saved-item-date  { font-size: 10px; color: #445; font-family: Arial, sans-serif; }
+    .saved-item-title { font-size: 12px; color: #aab; font-family: Arial, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .saved-item-date  { font-size: 11px; color: #667; font-family: Arial, sans-serif; }
     .saved-item-btns  { display: flex; gap: 3px; flex-shrink: 0; }
     .saved-item-btns button {
-      font-size: 9px; padding: 2px 5px; flex: none; color: #556;
+      font-size: 10px; padding: 2px 5px; flex: none; color: #778;
       background: #0a0a14; border-color: #1a1a28; border-radius: 4px;
     }
     .saved-item-btns button:hover { color: #99f; border-color: #3a3a5a; background: #111120; }
@@ -160,13 +160,13 @@
     .save-row { display: flex; gap: 5px; margin-top: 6px; }
     .save-row input[type="text"] {
       flex: 1; background: #0d0d16; border: 1px solid #252535; color: #aab;
-      padding: 4px 7px; border-radius: 5px; font-size: 11px; font-family: Arial, sans-serif;
+      padding: 4px 7px; border-radius: 5px; font-size: 12px; font-family: Arial, sans-serif;
     }
     .save-row input[type="text"]::placeholder { color: #334; }
-    #saveCurrentBtn { flex: none; font-size: 10px; padding: 4px 8px; }
+    #saveCurrentBtn { flex: none; font-size: 11px; padding: 4px 8px; }
     .hist-group-label {
-      font-size: 9px; text-transform: uppercase; letter-spacing: 0.12em;
-      color: #445; font-family: Arial, sans-serif;
+      font-size: 11px; text-transform: uppercase; letter-spacing: 0.12em;
+      color: #667; font-family: Arial, sans-serif;
       margin: 8px 0 4px 0; padding-bottom: 3px; border-bottom: 1px solid #111118;
     }
     .hist-item {
@@ -176,18 +176,18 @@
     }
     .hist-item:hover { border-color: #1e1e2e; background: #08080f; }
     .hist-item-info { flex: 1; min-width: 0; }
-    .hist-item-title { font-size: 11px; color: #99a; font-family: Arial, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .hist-item-date  { font-size: 9px; color: #445; font-family: Arial, sans-serif; }
+    .hist-item-title { font-size: 12px; color: #aab; font-family: Arial, sans-serif; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .hist-item-date  { font-size: 10px; color: #667; font-family: Arial, sans-serif; }
     .hist-item-btns  { display: flex; gap: 3px; flex-shrink: 0; }
     .hist-item-btns button {
-      font-size: 9px; padding: 2px 5px; flex: none; color: #556;
+      font-size: 10px; padding: 2px 5px; flex: none; color: #778;
       background: #0a0a14; border: 1px solid #1a1a28; border-radius: 4px; cursor: pointer;
     }
     .hist-item-btns button:hover { color: #99f; border-color: #3a3a5a; background: #111120; }
     #histList { max-height: 240px; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #222 #0a0a14; }
     #histSearch {
       width: 100%; background: #0d0d16; border: 1px solid #252535; color: #aab;
-      padding: 4px 7px; border-radius: 5px; font-size: 11px; font-family: Arial, sans-serif;
+      padding: 4px 7px; border-radius: 5px; font-size: 12px; font-family: Arial, sans-serif;
       margin-bottom: 7px; box-sizing: border-box;
     }
     #histSearch::placeholder { color: #334; }
@@ -237,7 +237,7 @@
       <button id="clearCompare">Clear</button>
     </div>
     <div class="err" id="error2"></div>
-    <div id="compareNote" style="font-size:11px;color:#445;margin-top:5px;display:none;font-family:Arial,sans-serif;">Faded = compare date</div>
+    <div id="compareNote" style="font-size:12px;color:#667;margin-top:5px;display:none;font-family:Arial,sans-serif;">Faded = compare date</div>
   </div>
 
   <div class="panel">
@@ -247,7 +247,7 @@
       <input type="text" id="saveName" placeholder="Label (e.g. My Birthday)">
       <button id="saveCurrentBtn">Save</button>
     </div>
-    <div style="font-size:10px;color:#334;margin-top:5px;font-family:Arial,sans-serif;" id="saveMsg"></div>
+    <div style="font-size:11px;color:#556;margin-top:5px;font-family:Arial,sans-serif;" id="saveMsg"></div>
   </div>
 
   <div class="panel accordion-panel">
@@ -270,14 +270,14 @@
     </div>
     <div class="accordion-body" id="accordionBody">
       <div class="accordion-section">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#556;margin-bottom:8px;font-family:Arial,sans-serif;">Similar Alignments</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#778;margin-bottom:8px;font-family:Arial,sans-serif;">Similar Alignments</div>
         <div style="display:flex;gap:5px;margin-bottom:7px;">
-          <button class="scan-dir-btn active-dir" data-dir="both" style="font-size:10px;padding:4px 0;">⇄ Both</button>
-          <button class="scan-dir-btn" data-dir="past" style="font-size:10px;padding:4px 0;">◀ Past</button>
-          <button class="scan-dir-btn" data-dir="future" style="font-size:10px;padding:4px 0;">Future ▶</button>
+          <button class="scan-dir-btn active-dir" data-dir="both" style="font-size:11px;padding:4px 0;">⇄ Both</button>
+          <button class="scan-dir-btn" data-dir="past" style="font-size:11px;padding:4px 0;">◀ Past</button>
+          <button class="scan-dir-btn" data-dir="future" style="font-size:11px;padding:4px 0;">Future ▶</button>
         </div>
         <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
-          <label style="font-size:10px;color:#445;font-family:Arial,sans-serif;white-space:nowrap;">Range:</label>
+          <label style="font-size:11px;color:#667;font-family:Arial,sans-serif;white-space:nowrap;">Range:</label>
           <select id="scanRange" style="flex:1;background:#0a0a14;border:1px solid #1e1e2e;color:#88a;font-size:11px;padding:3px 5px;border-radius:4px;font-family:Arial,sans-serif;">
             <option value="100">± 100 years</option>
             <option value="1000">± 1,000 years</option>
@@ -290,16 +290,16 @@
           </select>
         </div>
         <button id="simScanBtn" style="width:100%;margin-bottom:8px;">Scan Alignments</button>
-        <div id="simStatus" style="font-size:11px;color:#445;margin-bottom:6px;font-family:Arial,sans-serif;">Set direction &amp; range, then scan.</div>
+        <div id="simStatus" style="font-size:12px;color:#667;margin-bottom:6px;font-family:Arial,sans-serif;">Set direction &amp; range, then scan.</div>
         <div id="similarList"></div>
       </div>
       <div class="accordion-section">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#556;margin-bottom:6px;font-family:Arial,sans-serif;">Alignment Settings</div>
-        <div style="font-size:10px;color:#445;margin-bottom:8px;font-family:Arial,sans-serif;">Tolerance = % closeness required (100% = exact)</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#778;margin-bottom:6px;font-family:Arial,sans-serif;">Alignment Settings</div>
+        <div style="font-size:11px;color:#667;margin-bottom:8px;font-family:Arial,sans-serif;">Tolerance = % closeness required (100% = exact)</div>
         <div id="planetControls"></div>
       </div>
       <div class="accordion-section">
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.1em;color:#556;margin-bottom:6px;font-family:Arial,sans-serif;">Alignment Status</div>
+        <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.1em;color:#778;margin-bottom:6px;font-family:Arial,sans-serif;">Alignment Status</div>
         <div id="alignmentStatus" class="astat">—</div>
       </div>
     </div>
