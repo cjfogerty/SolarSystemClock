@@ -936,16 +936,16 @@ new p5(function(sk) {
     } else if (live) {
       dateStr = live.toLocaleDateString('en-US', { weekday:'short', month:'short', day:'numeric', year:'numeric' });
     } else { dateStr = ''; }
-    const bw = 152, bh = 50, margin = 10;
+    const bw = 190, bh = 68, margin = 10;
     const bx = -W/2 + margin, by = H/2 - margin - bh;
     sk.push(); sk.resetMatrix(); sk.translate(CX * scaleFactor, CY * scaleFactor); sk.scale(scaleFactor);
     sk.noStroke(); sk.fill(4, 5, 14, 200); sk.rect(bx, by, bw, bh, 7);
     sk.stroke(80, 80, 160, 60); sk.strokeWeight(1); sk.line(bx+7, by+1, bx+bw-7, by+1);
     sk.noFill(); sk.stroke(35, 35, 80, 130); sk.strokeWeight(1); sk.rect(bx, by, bw, bh, 7);
-    sk.noStroke(); sk.fill(60, 160, 255, 30); sk.textSize(23); sk.textFont('Georgia'); sk.textAlign(sk.LEFT, sk.TOP);
-    for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) sk.text(timeStr, bx+12+dx, by+7+dy);
-    sk.fill(110, 205, 255, 240); sk.text(timeStr, bx+12, by+7);
-    sk.fill(180, 185, 225, 240); sk.textSize(9); sk.textFont('Arial'); sk.text(dateStr, bx+12, by+34);
+    sk.noStroke(); sk.fill(60, 160, 255, 30); sk.textSize(32); sk.textFont('Georgia'); sk.textAlign(sk.LEFT, sk.TOP);
+    for (let dx=-1; dx<=1; dx++) for (let dy=-1; dy<=1; dy++) sk.text(timeStr, bx+12+dx, by+8+dy);
+    sk.fill(110, 205, 255, 240); sk.text(timeStr, bx+12, by+8);
+    sk.fill(180, 185, 225, 240); sk.textSize(14); sk.textFont('Arial'); sk.text(dateStr, bx+12, by+46);
     sk.textAlign(sk.CENTER, sk.CENTER); sk.pop();
   }
 
