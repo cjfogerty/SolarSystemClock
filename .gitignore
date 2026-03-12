@@ -1,6 +1,6 @@
 .runtime/
 .claude/
 .logs/
+.beads/
 __pycache__/
 state.json
-.beads/
