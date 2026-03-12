@@ -826,7 +826,7 @@ new p5(function(sk) {
     sk.textAlign(sk.CENTER, sk.CENTER);
     sk.loop();
   };
-  sk.windowResized = function() { computeCanvasSize(); sk.resizeCanvas(canvasSize, canvasSize); };
+  sk.windowResized = function() { computeCanvasSize(); sk.pixelDensity(window.devicePixelRatio || 1); sk.resizeCanvas(canvasSize, canvasSize); };
 
   sk.draw = function() {
     sk.background(4, 4, 8);
@@ -907,7 +907,7 @@ new p5(function(sk) {
           }
         }
         drawPlanetOrb(sk, x, y, p, 255);
-        sk.fill(200, 200, 215, 210); sk.noStroke(); sk.textSize(10); sk.textFont('Arial'); sk.text(p.name, x, y + p.size + 11);
+        sk.fill(200, 200, 215, 210); sk.noStroke(); sk.textSize(13); sk.textFont('Arial'); sk.text(p.name, x, y + p.size + 13);
       } else {
         const [r,g,b] = p.color; const s = p.size;
         sk.noStroke(); sk.fill(r, g, b, 55); sk.ellipse(x, y, s*2, s*2);
@@ -922,7 +922,7 @@ new p5(function(sk) {
           const lineEnd = s * 2.8 + 8; sk.stroke(r, g, b, 180); sk.strokeWeight(1);
           for (let seg = 0; seg < 5; seg++) { if (seg % 2 === 0) { const t0 = seg/5, t1 = (seg+0.55)/5; sk.line(x+nx*(s+t0*lineEnd), y+ny*(s+t0*lineEnd), x+nx*(s+t1*lineEnd), y+ny*(s+t1*lineEnd)); } }
         }
-        sk.fill(r, g, b, isOverlap ? 230 : 180); sk.noStroke(); sk.textSize(9); sk.textFont('Arial'); sk.text(p.name[0]+'₂', lx, ly);
+        sk.fill(r, g, b, isOverlap ? 230 : 180); sk.noStroke(); sk.textSize(11); sk.textFont('Arial'); sk.text(p.name[0]+'₂', lx, ly);
       }
     });
   }
@@ -998,8 +998,8 @@ new p5(function(sk) {
         sk.text(String(clockNum), nx, ny);
       } else {
         sk.fill(5, 5, 20, 170);
-        sk.rect(nx - 10, ny - 9, 20, 18, 4);
-        sk.fill(215, 212, 245, 230); sk.textSize(15); sk.textStyle(sk.NORMAL); sk.textFont('Georgia');
+        sk.rect(nx - 12, ny - 10, 24, 20, 4);
+        sk.fill(215, 212, 245, 230); sk.textSize(17); sk.textStyle(sk.NORMAL); sk.textFont('Georgia');
         sk.text(String(clockNum), nx, ny);
       }
       sk.textStyle(sk.NORMAL);
@@ -1072,7 +1072,7 @@ new p5(function(sk) {
       sk.noStroke();
 
       if (isQ) {
-        const pillW = 38, pillH = 22;
+        const pillW = 44, pillH = 26;
         sk.fill(3, 3, 15, 235);
         sk.rect(lx - pillW/2, ly - pillH/2, pillW, pillH, 6);
         sk.noFill(); sk.stroke(r, g, b, 200); sk.strokeWeight(1.2);
@@ -1080,18 +1080,18 @@ new p5(function(sk) {
         sk.strokeWeight(1);
         sk.noStroke(); sk.fill(r, g, b, 16); sk.ellipse(lx, ly, pillW + 18, pillH + 18);
         sk.fill(r, g, b, 255);
-        sk.textSize(14); sk.textStyle(sk.BOLD); sk.textFont('Georgia');
+        sk.textSize(16); sk.textStyle(sk.BOLD); sk.textFont('Georgia');
         sk.text(MONTHS[mi], lx, ly + 1);
         sk.textStyle(sk.NORMAL);
       } else {
-        const pillW = 32, pillH = 18;
+        const pillW = 36, pillH = 20;
         sk.fill(3, 3, 15, 210);
         sk.rect(lx - pillW/2, ly - pillH/2, pillW, pillH, 4);
         sk.noFill(); sk.stroke(r, g, b, 90); sk.strokeWeight(0.8);
         sk.rect(lx - pillW/2, ly - pillH/2, pillW, pillH, 4);
         sk.strokeWeight(1);
         sk.noStroke(); sk.fill(220, 220, 240, 255);
-        sk.textSize(11); sk.textStyle(sk.NORMAL); sk.textFont('Georgia');
+        sk.textSize(13); sk.textStyle(sk.NORMAL); sk.textFont('Georgia');
         sk.text(MONTHS[mi], lx, ly + 0.5);
       }
     }
