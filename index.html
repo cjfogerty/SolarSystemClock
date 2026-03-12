@@ -191,6 +191,30 @@
       margin-bottom: 7px; box-sizing: border-box;
     }
     #histSearch::placeholder { color: #334; }
+
+    /* ── Bright-star hover card ───────────────────────────────── */
+    #star-card {
+      display: none; position: absolute; z-index: 200; pointer-events: none;
+      width: 196px;
+      background: linear-gradient(160deg, #0c0c1a 0%, #07070f 100%);
+      border: 1px solid #2a2a50; border-radius: 10px;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.75);
+      font-family: Arial, sans-serif;
+    }
+    #star-card.visible { display: block; }
+    #sc-canvas {
+      display: block; width: 100%; height: 76px;
+      border-radius: 9px 9px 0 0;
+      background: #03030d; border-bottom: 1px solid #1a1a30;
+    }
+    .sc-body { padding: 8px 10px 9px; }
+    .sc-name { font-size: 13px; font-weight: bold; color: #dde; font-family: Georgia, serif; margin-bottom: 1px; }
+    .sc-star { font-size: 10px; color: #6688aa; margin-bottom: 6px; }
+    .sc-desc { font-size: 11px; color: #9aabb8; line-height: 1.5; margin-bottom: 6px; }
+    .sc-footer { display: flex; align-items: center; gap: 5px; border-top: 1px solid #181830; padding-top: 5px; }
+    .sc-months { font-size: 10px; color: #5566aa; flex: 1; }
+    .sc-now { font-size: 9px; font-weight: bold; color: #4da; background: #0a2018; border: 1px solid #1a4030; border-radius: 3px; padding: 1px 4px; display: none; }
+    .sc-now.visible { display: inline-block; }
   </style>
 </head>
 <body>
@@ -306,7 +330,20 @@
   </div>
 </div>
 
-<div id="canvas-wrap"></div>
+<div id="canvas-wrap">
+  <div id="star-card">
+    <canvas id="sc-canvas" width="196" height="76"></canvas>
+    <div class="sc-body">
+      <div class="sc-name" id="sc-name"></div>
+      <div class="sc-star" id="sc-star"></div>
+      <div class="sc-desc" id="sc-desc"></div>
+      <div class="sc-footer">
+        <span class="sc-months" id="sc-months"></span>
+        <span class="sc-now" id="sc-now">Now visible</span>
+      </div>
+    </div>
+  </div>
+</div>
 
 <script>
 const PLANETS = [
@@ -782,6 +819,72 @@ document.getElementById('simScanBtn').addEventListener('click', () => {
 });
 
 // ─────────────────────────────────────────────────────────────────────────────
+// BRIGHT STARS DATA
+// Stars placed at radius ~510 in each seasonal quadrant (outside calendar ring).
+// Top = winter, right = spring, bottom = summer, left = autumn.
+// ─────────────────────────────────────────────────────────────────────────────
+const BRIGHT_STARS_DATA = [
+  // Winter (upper-right, Dec–Feb)
+  { x: 216,  y: -462, constellation: "Orion",      star: "Rigel",         brightness: 1.0,
+    desc: "The Hunter dominates winter skies. The Orion Nebula, a stellar nursery 1,344 light-years away, glows within his sword.",
+    months: "Dec\u2013Feb" },
+  { x: 361,  y: -361, constellation: "Taurus",     star: "Aldebaran",     brightness: 0.8,
+    desc: "The Bull charges through winter nights. Red-giant Aldebaran marks his eye, and the Pleiades cluster rides his shoulder.",
+    months: "Nov\u2013Jan" },
+  { x: 462,  y: -216, constellation: "Gemini",     star: "Pollux",        brightness: 0.75,
+    desc: "The Twins stand side by side in winter skies. Castor and Pollux mark their heads, and the Geminid meteor shower radiates from here each December.",
+    months: "Jan\u2013Mar" },
+  // Spring (lower-right, Mar–May)
+  { x: 462,  y:  216, constellation: "Leo",        star: "Regulus",       brightness: 0.9,
+    desc: "The Lion\u2019s sickle rises high in spring evenings. Regulus, at the lion\u2019s heart, is a blue-white star just 79 light-years away.",
+    months: "Feb\u2013May" },
+  { x: 361,  y:  361, constellation: "Virgo",      star: "Spica",         brightness: 0.85,
+    desc: "The Maiden holds a sheaf of wheat. Spica is a binary system 250 light-years distant, and Virgo hosts a supercluster of 1,300 galaxies.",
+    months: "Mar\u2013Jun" },
+  { x: 216,  y:  462, constellation: "Bo\u00f6tes", star: "Arcturus",     brightness: 0.9,
+    desc: "The Herdsman follows the Great Bear across spring skies. Arcturus \u2014 the brightest northern-hemisphere star \u2014 is an orange giant 37 light-years away.",
+    months: "Apr\u2013Jul" },
+  // Summer (lower-left, Jun–Sep)
+  { x: -216, y:  462, constellation: "Scorpius",   star: "Antares",       brightness: 1.0,
+    desc: "The Scorpion\u2019s heart glows deep red in summer skies. Antares is a supergiant roughly 700 times the diameter of our Sun.",
+    months: "May\u2013Aug" },
+  { x: -361, y:  361, constellation: "Sagittarius", star: "Kaus Australis", brightness: 0.85,
+    desc: "The Archer\u2019s teapot asterism aims toward the galactic center. The Milky Way shines brightest in Sagittarius, concealing a supermassive black hole.",
+    months: "Jun\u2013Sep" },
+  { x: -462, y:  216, constellation: "Cygnus",     star: "Deneb",         brightness: 0.9,
+    desc: "The Swan soars along the summer Milky Way. Deneb may be 200,000 times more luminous than the Sun \u2014 one of the most powerful stars known.",
+    months: "Jul\u2013Oct" },
+  // Autumn (upper-left, Sep–Dec)
+  { x: -462, y: -216, constellation: "Pegasus",    star: "Markab",        brightness: 0.8,
+    desc: "The Winged Horse gallops across autumn skies. Its Great Square is a landmark of the fall sky, outlined by four equally bright stars.",
+    months: "Sep\u2013Dec" },
+  { x: -361, y: -361, constellation: "Perseus",    star: "Mirfak",        brightness: 0.85,
+    desc: "The Hero slays Medusa against the Milky Way. Algol, his variable star, dims every 2.9 days as a companion eclipses it.",
+    months: "Oct\u2013Jan" },
+  { x: -216, y: -462, constellation: "Andromeda",  star: "Alpheratz",     brightness: 0.95,
+    desc: "The Chained Princess harbors M31 \u2014 the Andromeda Galaxy, our nearest large neighbor at 2.5 million light-years and visible to the naked eye.",
+    months: "Aug\u2013Nov" },
+];
+
+// Simple constellation line-art: stars [[x,y]…], lines [[a,b]…], bright star indices
+const CONSTELLATION_SHAPES = {
+  Orion:      { stars:[[50,12],[64,22],[36,22],[50,38],[50,52],[54,64],[46,64],[28,73],[72,73],[50,86]], lines:[[0,1],[0,2],[1,3],[2,3],[3,4],[4,5],[4,6],[5,7],[6,8],[7,9],[8,9]], bright:[0,1,2,7,8] },
+  Taurus:     { stars:[[50,48],[35,38],[65,38],[22,48],[78,48],[50,62],[14,25],[25,20],[36,22]], lines:[[0,1],[0,2],[1,3],[2,4],[0,5],[6,7],[7,8]], bright:[0,3,4,6] },
+  Gemini:     { stars:[[35,10],[65,15],[30,35],[60,38],[30,60],[60,65],[28,82],[58,84]], lines:[[0,1],[0,2],[2,4],[4,6],[1,3],[3,5],[5,7],[6,7]], bright:[0,1,6,7] },
+  Leo:        { stars:[[50,20],[35,32],[22,48],[38,58],[65,55],[75,38],[68,70],[55,80]], lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,0],[4,6],[6,7]], bright:[0,2,4,7] },
+  Virgo:      { stars:[[50,10],[50,32],[35,58],[65,58],[50,75],[40,88],[62,88]], lines:[[0,1],[1,2],[1,3],[2,4],[4,5],[4,6]], bright:[0,4] },
+  'Boötes':   { stars:[[50,10],[30,35],[70,35],[35,58],[65,58],[50,80]], lines:[[0,1],[0,2],[1,3],[2,4],[3,5],[4,5],[1,2]], bright:[0,5] },
+  Scorpius:   { stars:[[50,10],[35,20],[65,22],[50,35],[40,50],[30,64],[22,78],[28,90],[42,92],[56,88]], lines:[[0,1],[0,2],[1,3],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9]], bright:[0,2,8] },
+  Sagittarius:{ stars:[[45,25],[60,25],[70,40],[58,55],[42,55],[28,45],[22,58],[18,45],[38,68],[55,70]], lines:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,5],[4,8],[8,9],[0,5]], bright:[1,2,8] },
+  Cygnus:     { stars:[[50,10],[50,38],[50,68],[50,88],[20,38],[80,38]], lines:[[0,1],[1,2],[2,3],[4,1],[1,5]], bright:[0,1,4,5] },
+  Pegasus:    { stars:[[25,30],[75,30],[75,70],[25,70],[50,15],[68,5],[82,15]], lines:[[0,1],[1,2],[2,3],[3,0],[0,4],[4,5],[5,6]], bright:[0,1,2,3] },
+  Perseus:    { stars:[[50,10],[60,25],[68,42],[55,55],[40,65],[25,75],[36,50],[50,35]], lines:[[0,7],[7,1],[1,2],[2,3],[3,4],[4,5],[7,6],[6,3]], bright:[0,4] },
+  Andromeda:  { stars:[[50,50],[35,35],[20,20],[65,35],[80,20],[50,68],[44,84]], lines:[[0,1],[1,2],[0,3],[3,4],[0,5],[5,6]], bright:[0,2,4] },
+};
+
+let _hoveredStarIdx = -1;
+
+// ─────────────────────────────────────────────────────────────────────────────
 // p5 SKETCH
 // ─────────────────────────────────────────────────────────────────────────────
 new p5(function(sk) {
@@ -843,6 +946,7 @@ new p5(function(sk) {
     }
 
     drawStars(sk);
+    drawBrightStars(sk);
     drawCalendarOverlay(sk, primaryDays, rotOff, monthAngles);
     drawAnalogClock(sk, primaryDays, rotOff, monthAngles);
     drawSun(sk);
@@ -860,6 +964,58 @@ new p5(function(sk) {
       const twinkle = 0.85 + 0.15 * Math.sin(sk.millis()*0.001 + s.x);
       sk.fill(255, 255, 255, s.a * twinkle);
       sk.ellipse(s.x, s.y, s.r*2, s.r*2);
+    });
+  }
+
+  function drawBrightStars(sk) {
+    const t = sk.millis() * 0.001;
+    BRIGHT_STARS_DATA.forEach((s, i) => {
+      const twinkle = 0.72 + 0.28 * Math.sin(t * 1.4 + i * 0.9);
+      const hovered = (i === _hoveredStarIdx);
+      const br = (s.brightness || 0.85) * (hovered ? 1.3 : 1.0);
+      const r = 3.5 * br * twinkle;
+
+      // glow layers
+      for (let g = 4; g >= 1; g--) {
+        sk.noStroke(); sk.fill(180, 205, 255, (hovered ? 30 : 18) / g * twinkle);
+        sk.ellipse(s.x, s.y, (r + g*7)*2, (r + g*7)*2);
+      }
+
+      // 4-pointed sparkle
+      sk.noStroke(); sk.fill(230, 240, 255, (hovered ? 255 : 200) * twinkle);
+      const sp = r * 2.6, sr = r * 0.55;
+      sk.beginShape();
+      sk.vertex(s.x,       s.y - sp);
+      sk.vertex(s.x + sr,  s.y - sr);
+      sk.vertex(s.x + sp,  s.y);
+      sk.vertex(s.x + sr,  s.y + sr);
+      sk.vertex(s.x,       s.y + sp);
+      sk.vertex(s.x - sr,  s.y + sr);
+      sk.vertex(s.x - sp,  s.y);
+      sk.vertex(s.x - sr,  s.y - sr);
+      sk.endShape(sk.CLOSE);
+
+      // cross-hair diffraction spikes
+      const spk = r * 4.2;
+      sk.stroke(210, 225, 255, (hovered ? 100 : 55) * twinkle); sk.strokeWeight(0.6);
+      sk.line(s.x - spk, s.y, s.x + spk, s.y);
+      sk.line(s.x, s.y - spk, s.x, s.y + spk);
+      sk.strokeWeight(1);
+
+      // bright core
+      sk.noStroke(); sk.fill(255, 255, 255, 220 * twinkle);
+      sk.ellipse(s.x, s.y, r * 0.9, r * 0.9);
+
+      // hover: constellation name label above star
+      if (hovered) {
+        const lbl = s.constellation;
+        const lw = lbl.length * 5.5 + 10;
+        const lx = s.x, ly = s.y - sp - 16;
+        sk.noStroke(); sk.fill(4, 5, 18, 210);
+        sk.rect(lx - lw/2, ly - 9, lw, 16, 4);
+        sk.fill(190, 215, 255, 240); sk.textSize(9); sk.textFont('Arial');
+        sk.text(lbl, lx, ly + 0.5);
+      }
     });
   }
 
@@ -1097,6 +1253,148 @@ new p5(function(sk) {
     }
   }
 });
+
+// ─────────────────────────────────────────────────────────────────────────────
+// BRIGHT-STAR HOVER INTERACTION
+// ─────────────────────────────────────────────────────────────────────────────
+(function() {
+  const card   = document.getElementById('star-card');
+  const elName = document.getElementById('sc-name');
+  const elStar = document.getElementById('sc-star');
+  const elDesc = document.getElementById('sc-desc');
+  const elMon  = document.getElementById('sc-months');
+  const elNow  = document.getElementById('sc-now');
+  const cvArt  = document.getElementById('sc-canvas');
+
+  function getCanvas() { return document.querySelector('#canvas-wrap canvas'); }
+
+  // Convert client coords → p5 drawing space (centered, before scaleFactor)
+  function toDrawing(clientX, clientY) {
+    const cv = getCanvas(); if (!cv) return null;
+    const rect = cv.getBoundingClientRect();
+    const dpr  = window.devicePixelRatio || 1;
+    const px = (clientX - rect.left)  * (cv.width  / (rect.width  * dpr));
+    const py = (clientY - rect.top)   * (cv.height / (rect.height * dpr));
+    const sf = cv.width / (1100 * dpr);
+    return { x: px / sf - 550, y: py / sf - 550 };
+  }
+
+  function hitTest(dx, dy) {
+    for (let i = 0; i < BRIGHT_STARS_DATA.length; i++) {
+      const s = BRIGHT_STARS_DATA[i];
+      if (Math.hypot(dx - s.x, dy - s.y) < 22) return i;
+    }
+    return -1;
+  }
+
+  // Check if constellation is currently visible based on primaryDays
+  const MON_NUM = { Jan:1,Feb:2,Mar:3,Apr:4,May:5,Jun:6,Jul:7,Aug:8,Sep:9,Oct:10,Nov:11,Dec:12 };
+  function isNowVisible(s) {
+    const d = new Date(J2000().getTime() + getPrimaryDays() * 86400000);
+    const m = d.getMonth() + 1;
+    const parts = s.months.split('\u2013');
+    const a = MON_NUM[parts[0].trim()], b = MON_NUM[parts[1].trim()];
+    return a <= b ? (m >= a && m <= b) : (m >= a || m <= b);
+  }
+
+  // Draw constellation line-art onto sc-canvas
+  function renderArt(idx) {
+    const s = BRIGHT_STARS_DATA[idx];
+    const shape = CONSTELLATION_SHAPES[s.constellation];
+    if (!cvArt || !shape) return;
+    const ctx = cvArt.getContext('2d');
+    const W = cvArt.width, H = cvArt.height;
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = '#03030d';
+    ctx.fillRect(0, 0, W, H);
+
+    const pad = 14;
+    const xs = shape.stars.map(p => p[0]), ys = shape.stars.map(p => p[1]);
+    const x0 = Math.min(...xs), x1 = Math.max(...xs);
+    const y0 = Math.min(...ys), y1 = Math.max(...ys);
+    const scx = (x1-x0) > 0 ? (W-pad*2)/(x1-x0) : 1;
+    const scy = (y1-y0) > 0 ? (H-pad*2)/(y1-y0) : 1;
+    const sc  = Math.min(scx, scy) * 0.82;
+    const ox  = pad + ((W-pad*2) - (x1-x0)*sc) / 2 - x0*sc;
+    const oy  = pad + ((H-pad*2) - (y1-y0)*sc) / 2 - y0*sc;
+    const px  = i => shape.stars[i][0] * sc + ox;
+    const py  = i => shape.stars[i][1] * sc + oy;
+
+    ctx.strokeStyle = 'rgba(110,140,220,0.38)';
+    ctx.lineWidth = 0.9;
+    ctx.beginPath();
+    shape.lines.forEach(([a, b]) => { ctx.moveTo(px(a), py(a)); ctx.lineTo(px(b), py(b)); });
+    ctx.stroke();
+
+    shape.stars.forEach((_, i) => {
+      const bright = shape.bright && shape.bright.includes(i);
+      ctx.beginPath();
+      ctx.arc(px(i), py(i), bright ? 2.4 : 1.3, 0, Math.PI*2);
+      ctx.fillStyle = bright ? '#e8ecff' : 'rgba(160,175,220,0.75)';
+      ctx.fill();
+    });
+  }
+
+  function showCard(idx, clientX, clientY) {
+    const s = BRIGHT_STARS_DATA[idx];
+    elName.textContent = s.constellation;
+    elStar.textContent = '\u2605 ' + s.star;
+    elDesc.textContent = s.desc;
+    elMon.textContent  = 'Best visible: ' + s.months;
+    if (isNowVisible(s)) elNow.classList.add('visible');
+    else                  elNow.classList.remove('visible');
+    renderArt(idx);
+
+    const wrap  = document.getElementById('canvas-wrap');
+    const wrect = wrap.getBoundingClientRect();
+    let cx = clientX - wrect.left + 14;
+    let cy = clientY - wrect.top  - 30;
+    if (cx + 210 > wrect.width)  cx = clientX - wrect.left - 210;
+    if (cy + 220 > wrect.height) cy = clientY - wrect.top  - 220;
+    if (cy < 0) cy = 2;
+    card.style.left = cx + 'px';
+    card.style.top  = cy + 'px';
+    card.classList.add('visible');
+  }
+
+  function hideCard() {
+    card.classList.remove('visible');
+    _hoveredStarIdx = -1;
+  }
+
+  // Mouse
+  document.addEventListener('mousemove', e => {
+    const cv = getCanvas(); if (!cv) return;
+    const rect = cv.getBoundingClientRect();
+    if (e.clientX < rect.left || e.clientX > rect.right ||
+        e.clientY < rect.top  || e.clientY > rect.bottom) {
+      if (_hoveredStarIdx >= 0) hideCard();
+      return;
+    }
+    const dp  = toDrawing(e.clientX, e.clientY); if (!dp) return;
+    const idx = hitTest(dp.x, dp.y);
+    if (idx !== _hoveredStarIdx) {
+      _hoveredStarIdx = idx;
+      if (idx >= 0) showCard(idx, e.clientX, e.clientY);
+      else           hideCard();
+    }
+  });
+
+  // Touch – tap to show, tap outside to dismiss
+  document.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    const t  = e.touches[0];
+    const dp = toDrawing(t.clientX, t.clientY); if (!dp) return;
+    const idx = hitTest(dp.x, dp.y);
+    if (idx >= 0) {
+      e.preventDefault();
+      _hoveredStarIdx = idx;
+      showCard(idx, t.clientX, t.clientY);
+    } else if (_hoveredStarIdx >= 0) {
+      hideCard();
+    }
+  }, { passive: false });
+})();
 </script>
 </body>
 </html>
