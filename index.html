@@ -825,43 +825,43 @@ document.getElementById('simScanBtn').addEventListener('click', () => {
 // ─────────────────────────────────────────────────────────────────────────────
 const BRIGHT_STARS_DATA = [
   // Winter (upper-right, Dec–Feb)
-  { x: 216,  y: -462, constellation: "Orion",      star: "Rigel",         brightness: 1.0,
+  { x: 226,  y: -484, constellation: "Orion",      star: "Rigel",         brightness: 1.0,
     desc: "The Hunter dominates winter skies. The Orion Nebula, a stellar nursery 1,344 light-years away, glows within his sword.",
     months: "Dec\u2013Feb" },
-  { x: 361,  y: -361, constellation: "Taurus",     star: "Aldebaran",     brightness: 0.8,
+  { x: 379,  y: -379, constellation: "Taurus",     star: "Aldebaran",     brightness: 0.8,
     desc: "The Bull charges through winter nights. Red-giant Aldebaran marks his eye, and the Pleiades cluster rides his shoulder.",
     months: "Nov\u2013Jan" },
-  { x: 462,  y: -216, constellation: "Gemini",     star: "Pollux",        brightness: 0.75,
+  { x: 485,  y: -227, constellation: "Gemini",     star: "Pollux",        brightness: 0.75,
     desc: "The Twins stand side by side in winter skies. Castor and Pollux mark their heads, and the Geminid meteor shower radiates from here each December.",
     months: "Jan\u2013Mar" },
   // Spring (lower-right, Mar–May)
-  { x: 462,  y:  216, constellation: "Leo",        star: "Regulus",       brightness: 0.9,
+  { x: 485,  y:  227, constellation: "Leo",        star: "Regulus",       brightness: 0.9,
     desc: "The Lion\u2019s sickle rises high in spring evenings. Regulus, at the lion\u2019s heart, is a blue-white star just 79 light-years away.",
     months: "Feb\u2013May" },
-  { x: 361,  y:  361, constellation: "Virgo",      star: "Spica",         brightness: 0.85,
+  { x: 379,  y:  379, constellation: "Virgo",      star: "Spica",         brightness: 0.85,
     desc: "The Maiden holds a sheaf of wheat. Spica is a binary system 250 light-years distant, and Virgo hosts a supercluster of 1,300 galaxies.",
     months: "Mar\u2013Jun" },
-  { x: 216,  y:  462, constellation: "Bo\u00f6tes", star: "Arcturus",     brightness: 0.9,
+  { x: 227,  y:  485, constellation: "Bo\u00f6tes", star: "Arcturus",     brightness: 0.9,
     desc: "The Herdsman follows the Great Bear across spring skies. Arcturus \u2014 the brightest northern-hemisphere star \u2014 is an orange giant 37 light-years away.",
     months: "Apr\u2013Jul" },
   // Summer (lower-left, Jun–Sep)
-  { x: -216, y:  462, constellation: "Scorpius",   star: "Antares",       brightness: 1.0,
+  { x: -227, y:  485, constellation: "Scorpius",   star: "Antares",       brightness: 1.0,
     desc: "The Scorpion\u2019s heart glows deep red in summer skies. Antares is a supergiant roughly 700 times the diameter of our Sun.",
     months: "May\u2013Aug" },
-  { x: -361, y:  361, constellation: "Sagittarius", star: "Kaus Australis", brightness: 0.85,
+  { x: -379, y:  379, constellation: "Sagittarius", star: "Kaus Australis", brightness: 0.85,
     desc: "The Archer\u2019s teapot asterism aims toward the galactic center. The Milky Way shines brightest in Sagittarius, concealing a supermassive black hole.",
     months: "Jun\u2013Sep" },
-  { x: -462, y:  216, constellation: "Cygnus",     star: "Deneb",         brightness: 0.9,
+  { x: -485, y:  227, constellation: "Cygnus",     star: "Deneb",         brightness: 0.9,
     desc: "The Swan soars along the summer Milky Way. Deneb may be 200,000 times more luminous than the Sun \u2014 one of the most powerful stars known.",
     months: "Jul\u2013Oct" },
   // Autumn (upper-left, Sep–Dec)
-  { x: -462, y: -216, constellation: "Pegasus",    star: "Markab",        brightness: 0.8,
+  { x: -485, y: -227, constellation: "Pegasus",    star: "Markab",        brightness: 0.8,
     desc: "The Winged Horse gallops across autumn skies. Its Great Square is a landmark of the fall sky, outlined by four equally bright stars.",
     months: "Sep\u2013Dec" },
-  { x: -361, y: -361, constellation: "Perseus",    star: "Mirfak",        brightness: 0.85,
+  { x: -379, y: -379, constellation: "Perseus",    star: "Mirfak",        brightness: 0.85,
     desc: "The Hero slays Medusa against the Milky Way. Algol, his variable star, dims every 2.9 days as a companion eclipses it.",
     months: "Oct\u2013Jan" },
-  { x: -216, y: -462, constellation: "Andromeda",  star: "Alpheratz",     brightness: 0.95,
+  { x: -227, y: -485, constellation: "Andromeda",  star: "Alpheratz",     brightness: 0.95,
     desc: "The Chained Princess harbors M31 \u2014 the Andromeda Galaxy, our nearest large neighbor at 2.5 million light-years and visible to the naked eye.",
     months: "Aug\u2013Nov" },
 ];
@@ -946,9 +946,9 @@ new p5(function(sk) {
     }
 
     drawStars(sk);
-    drawBrightStars(sk);
     drawCalendarOverlay(sk, primaryDays, rotOff, monthAngles);
     drawAnalogClock(sk, primaryDays, rotOff, monthAngles);
+    drawBrightStars(sk);
     drawSun(sk);
 
     if (compareDaysSinceJ2000 !== null) drawPlanets(sk, compareDaysSinceJ2000, primaryDays, rotOff, true);
@@ -1266,7 +1266,7 @@ new p5(function(sk) {
   const elNow  = document.getElementById('sc-now');
   const cvArt  = document.getElementById('sc-canvas');
 
-  function getCanvas() { return document.querySelector('#canvas-wrap canvas'); }
+  function getCanvas() { return document.querySelector('#canvas-wrap canvas:not(#sc-canvas)'); }
 
   // Convert client coords → p5 drawing space (centered, before scaleFactor)
   function toDrawing(clientX, clientY) {
