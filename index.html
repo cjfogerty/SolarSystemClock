@@ -240,6 +240,26 @@
     #simDuration { width:52px; background:#06060f; border:1px solid #1e1e2e; color:#88a; font-size:11px; padding:3px 5px; border-radius:4px; text-align:center; }
     .sim-check-row { display:flex; flex-direction:column; gap:3px; margin-bottom:8px; }
     .sim-check-row label { font-size:11px; color:#778; font-family:Arial,sans-serif; cursor:pointer; display:flex; align-items:center; gap:5px; }
+    #sim-card-ring { position:absolute; inset:0; pointer-events:none; overflow:visible; z-index:6; display:none; }
+    #sim-card-ring.active { display:block; }
+    .sim-month-card {
+      position:absolute; min-width:72px; max-width:126px;
+      background:rgba(5,6,16,0.84); border:1px solid #161626; border-radius:5px;
+      padding:4px 7px; font-family:Arial,sans-serif;
+      transform:translate(-50%,-50%) scale(0.82);
+      transition:transform 0.38s cubic-bezier(.34,1.56,.64,1), box-shadow 0.32s ease, border-color 0.32s ease, background 0.32s ease;
+    }
+    .sim-month-card.active {
+      background:rgba(7,11,36,0.97); border-color:#2844bb;
+      box-shadow:0 0 20px rgba(38,68,220,0.55),0 0 48px rgba(38,68,220,0.18);
+      transform:translate(-50%,-50%) scale(1.24); z-index:10;
+    }
+    .smc-head { font-size:10px; font-weight:bold; color:#445; text-align:center; margin-bottom:3px; text-transform:uppercase; letter-spacing:0.07em; }
+    .sim-month-card.active .smc-head { color:#a0b8ff; }
+    .smc-ev { font-size:8px; color:#252535; line-height:1.45; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .sim-month-card.active .smc-ev { color:#44558a; }
+    .smc-ev.now { color:#4466dd; }
+    .sim-month-card.active .smc-ev.now { color:#88aaff; font-weight:bold; }
     #casey-overlay {
       display: none; position: fixed; inset: 0; z-index: 9999;
       background: rgba(0,0,0,0.88);
@@ -442,6 +462,7 @@
       </div>
     </div>
   </div>
+  <div id="sim-card-ring"></div>
 </div>
 
 <script>
@@ -924,8 +945,12 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
 (function() {
   let rafId = null, playing = false;
   let durationMs = 20000, startWallTime = 0, progressFrac = 0;
-  let savedDays = undefined; // undefined = not yet started
+  let savedDays = undefined;
   let milestones = [], lastMilestoneIdx = -1, flashTimer = null;
+  let cardEls = [];
+  window._simActive = false;
+
+  const MONTHS_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
 
   function getRange() {
     const sv = document.getElementById('simStart').value;
@@ -967,6 +992,67 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
     });
   }
 
+  // ── Month cards ──────────────────────────────────────────────────────────────
+  function initSimCards() {
+    const ring = document.getElementById('sim-card-ring');
+    ring.innerHTML = ''; cardEls = [];
+    const byMonth = {};
+    milestones.forEach(m => {
+      const mo = new Date(J2000().getTime() + m.days * 86400000).getMonth();
+      (byMonth[mo] = byMonth[mo] || []).push(m);
+    });
+    for (let mi = 0; mi < 12; mi++) {
+      const evs = byMonth[mi];
+      if (!evs || !evs.length) { cardEls.push(null); continue; }
+      const card = document.createElement('div');
+      card.className = 'sim-month-card';
+      card.innerHTML = `<div class="smc-head">${MONTHS_FULL[mi]}</div><div class="smc-evs">${evs.map(e => `<div class="smc-ev" data-days="${e.days}">${e.label}</div>`).join('')}</div>`;
+      ring.appendChild(card);
+      cardEls.push(card);
+    }
+    ring.classList.add('active');
+  }
+
+  function positionSimCards() {
+    const angles = window._simMonthAngles;
+    const sf = window._simScaleFactor || 1;
+    if (!angles || !cardEls.some(Boolean)) return;
+    const canvas = document.querySelector('#canvas-wrap canvas:not(#sc-canvas)');
+    const wrap = document.getElementById('canvas-wrap');
+    if (!canvas || !wrap) return;
+    const cr = canvas.getBoundingClientRect();
+    const wr = wrap.getBoundingClientRect();
+    const cx = cr.left - wr.left + cr.width / 2;
+    const cy = cr.top  - wr.top  + cr.height / 2;
+    const R  = 575 * sf;
+    for (let mi = 0; mi < 12; mi++) {
+      const card = cardEls[mi]; if (!card) continue;
+      const nextA = mi < 11 ? angles[mi + 1] : angles[0] + Math.PI * 2;
+      const midA  = (angles[mi] + nextA) / 2;
+      card.style.left = (cx + Math.cos(midA) * R) + 'px';
+      card.style.top  = (cy + Math.sin(midA) * R) + 'px';
+    }
+  }
+
+  function updateSimCards(days) {
+    const mo = new Date(J2000().getTime() + days * 86400000).getMonth();
+    cardEls.forEach((card, mi) => {
+      if (!card) return;
+      card.classList.toggle('active', mi === mo);
+      card.querySelectorAll('.smc-ev').forEach(el => {
+        el.classList.toggle('now', parseFloat(el.dataset.days) <= days);
+      });
+    });
+    positionSimCards();
+  }
+
+  function teardownSimCards() {
+    const ring = document.getElementById('sim-card-ring');
+    ring.innerHTML = ''; ring.classList.remove('active');
+    cardEls = []; window._simActive = false;
+  }
+
+  // ── Playback ─────────────────────────────────────────────────────────────────
   function flash(label) {
     const el = document.getElementById('simEventFlash');
     el.textContent = '✦ ' + label;
@@ -991,6 +1077,7 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
     document.getElementById('simProgress').value = Math.round(t * 1000);
     const idx = lastIdxWhere(milestones, m => m.days <= days);
     if (idx > lastMilestoneIdx) { lastMilestoneIdx = idx; flash(milestones[idx].label); }
+    updateSimCards(days);
     if (t < 1) { rafId = requestAnimationFrame(tick); }
     else { playing = false; rafId = null; updateBtns(); }
   }
@@ -1002,6 +1089,8 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
     if (savedDays === undefined) savedDays = customDaysSinceJ2000;
     buildMilestones();
     lastMilestoneIdx = lastIdxWhere(milestones, m => m.days <= (r.start + progressFrac * (r.end - r.start)));
+    initSimCards();
+    window._simActive = true;
     playing = true;
     startWallTime = performance.now() - progressFrac * durationMs;
     rafId = requestAnimationFrame(tick);
@@ -1013,11 +1102,13 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
     playing = false;
     cancelAnimationFrame(rafId); rafId = null;
     updateBtns();
+    // _simActive stays true — cards stay visible while paused
   }
 
   function stop() {
     playing = false; progressFrac = 0; lastMilestoneIdx = -1;
     if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    teardownSimCards();
     customDaysSinceJ2000 = savedDays !== undefined ? savedDays : null;
     savedDays = undefined;
     document.getElementById('customDate').value = customDaysSinceJ2000 !== null ? daysToInputVal(customDaysSinceJ2000) : '';
@@ -1040,6 +1131,7 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
     const days = r.start + progressFrac * (r.end - r.start);
     setDay(days);
     lastMilestoneIdx = lastIdxWhere(milestones, m => m.days <= days);
+    if (window._simActive) updateSimCards(days);
   });
 
   document.getElementById('simHeader').addEventListener('click', () => {
@@ -1050,8 +1142,8 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
   document.getElementById('simPlayBtn').addEventListener('click', play);
   document.getElementById('simPauseBtn').addEventListener('click', pause);
   document.getElementById('simStopBtn').addEventListener('click', stop);
+  window.addEventListener('resize', () => { if (window._simActive) positionSimCards(); });
 
-  // Default to current year
   const y = new Date().getFullYear();
   document.getElementById('simStart').value = `${y}-01-01`;
   document.getElementById('simEnd').value   = `${y}-12-31`;
@@ -1276,11 +1368,14 @@ new p5(function(sk) {
     for (let mo = 1; mo <= 12; mo++) {
       monthAngles.push(drawAngle(daysFromDate(calYear, mo, 1), PLANETS[2], rotOff));
     }
+    window._simMonthAngles = monthAngles;
+    window._simScaleFactor = scaleFactor;
 
     drawStars(sk);
     drawCalendarOverlay(sk, primaryDays, rotOff, monthAngles);
     drawAnalogClock(sk, primaryDays, rotOff, monthAngles);
     drawBrightStars(sk);
+    drawSimHighlights(sk, primaryDays, monthAngles);
     drawSun(sk);
 
     if (compareDaysSinceJ2000 !== null) drawPlanets(sk, compareDaysSinceJ2000, primaryDays, rotOff, true);
@@ -1349,6 +1444,34 @@ new p5(function(sk) {
         sk.text(lbl, lx, ly + 0.5);
       }
     });
+  }
+
+  function drawSimHighlights(sk, primaryDays, monthAngles) {
+    if (!window._simActive) return;
+    const curMo = new Date(J2000().getTime() + primaryDays * 86400000).getMonth();
+    const startA = monthAngles[curMo];
+    const endA   = curMo < 11 ? monthAngles[curMo + 1] : monthAngles[0] + Math.PI * 2;
+    const r1 = 452, r2 = 488;
+    sk.push();
+    // filled ring wedge
+    sk.noStroke(); sk.fill(38, 62, 200, 48);
+    sk.beginShape();
+    for (let a = startA; a <= endA + 0.01; a += 0.033) sk.vertex(Math.cos(a) * r2, Math.sin(a) * r2);
+    for (let a = endA;   a >= startA - 0.01; a -= 0.033) sk.vertex(Math.cos(a) * r1, Math.sin(a) * r1);
+    sk.endShape(sk.CLOSE);
+    // outer glow arc
+    sk.noFill(); sk.stroke(60, 92, 230, 120); sk.strokeWeight(1.6);
+    sk.arc(0, 0, r2 * 2, r2 * 2, startA, endA);
+    // dotted leader line to card zone
+    const midA = (startA + endA) / 2;
+    sk.stroke(45, 65, 195, 85); sk.strokeWeight(0.9);
+    for (let i = 0; i < 7; i++) {
+      if (i % 2 === 0) {
+        const ra = 492 + i * 11, rb = 492 + (i + 0.62) * 11;
+        sk.line(Math.cos(midA) * ra, Math.sin(midA) * ra, Math.cos(midA) * rb, Math.sin(midA) * rb);
+      }
+    }
+    sk.pop();
   }
 
   function drawSun(sk) {
