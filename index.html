@@ -1427,8 +1427,7 @@ new p5(function(sk) {
   function checkBirthday(days) {
     const d = new Date(J2000_MS + days * 86400000);
     if (d.getMonth() !== 3 || d.getDate() !== 10) return;
-    const savedMs = J2000_MS + days * 86400000;
-    const age = Math.floor((savedMs - CASEY_BIRTH_MS) / (365.25 * 86400000));
+    const age = d.getFullYear() - 1990;
     document.getElementById('casey-age').textContent = age;
     const overlay = document.getElementById('casey-overlay');
     overlay.classList.add('active');
