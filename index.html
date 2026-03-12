@@ -227,6 +227,19 @@
     #addEventForm { display:flex; flex-direction:column; gap:4px; margin-top:8px; }
     #addEventForm input[type="text"], #addEventForm input[type="date"] { width:100%; box-sizing:border-box; background:#06060f; border:1px solid #1e1e2e; color:#88a; font-size:11px; padding:4px 6px; border-radius:4px; font-family:Arial,sans-serif; }
     #addEventForm .add-row { display:flex; gap:5px; }
+    #simProgress { width:100%; margin:6px 0 2px; accent-color:#3355cc; cursor:pointer; }
+    .sim-markers { position:relative; height:5px; background:#080810; border-radius:2px; margin:2px 0 4px; }
+    .sim-marker { position:absolute; top:0; bottom:0; width:2px; border-radius:1px; transform:translateX(-50%); }
+    .sim-marker.holiday { background:#3355bb; }
+    .sim-marker.saved   { background:#337755; }
+    #simCurrentDate { font-size:11px; color:#556; font-family:Arial,sans-serif; text-align:center; min-height:14px; }
+    #simEventFlash  { font-size:11px; color:#88aaff; font-family:Arial,sans-serif; text-align:center; min-height:14px; font-style:italic; margin-top:2px; }
+    .sim-date-row { display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:6px; }
+    .sim-date-row label { font-size:10px; color:#445; font-family:Arial,sans-serif; display:block; margin-bottom:2px; }
+    .sim-date-row input[type="date"] { width:100%; box-sizing:border-box; background:#06060f; border:1px solid #1e1e2e; color:#88a; font-size:11px; padding:3px 5px; border-radius:4px; }
+    #simDuration { width:52px; background:#06060f; border:1px solid #1e1e2e; color:#88a; font-size:11px; padding:3px 5px; border-radius:4px; text-align:center; }
+    .sim-check-row { display:flex; flex-direction:column; gap:3px; margin-bottom:8px; }
+    .sim-check-row label { font-size:11px; color:#778; font-family:Arial,sans-serif; cursor:pointer; display:flex; align-items:center; gap:5px; }
     #casey-overlay {
       display: none; position: fixed; inset: 0; z-index: 9999;
       background: rgba(0,0,0,0.88);
@@ -336,6 +349,39 @@
             <button id="addEventBtn" class="ev-btn">Add</button>
           </div>
         </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel accordion-panel">
+    <div class="accordion-header" id="simHeader">
+      <span class="accordion-title">&#9654; Simulation</span>
+      <span class="accordion-arrow" id="simArrow">&#9658;</span>
+    </div>
+    <div class="accordion-body" id="simBody">
+      <div class="accordion-section" style="padding-top:8px;">
+        <div class="sim-date-row">
+          <div><label>Start</label><input type="date" id="simStart"></div>
+          <div><label>End</label><input type="date" id="simEnd"></div>
+        </div>
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:8px;">
+          <span style="font-size:11px;color:#667;font-family:Arial,sans-serif;">Duration</span>
+          <input type="number" id="simDuration" value="20" min="1" max="600">
+          <span style="font-size:11px;color:#667;font-family:Arial,sans-serif;">seconds</span>
+        </div>
+        <div class="sim-check-row">
+          <label><input type="checkbox" id="simHolidays" checked> Highlight holidays &amp; events</label>
+          <label><input type="checkbox" id="simSaved" checked> Highlight saved dates</label>
+        </div>
+        <div style="display:flex;gap:5px;margin-bottom:8px;">
+          <button id="simPlayBtn" style="flex:1;">&#9654; Play</button>
+          <button id="simPauseBtn" style="flex:1;">&#9646;&#9646; Pause</button>
+          <button id="simStopBtn" style="flex:1;">&#9632; Stop</button>
+        </div>
+        <div class="sim-markers" id="simMarkers"></div>
+        <input type="range" id="simProgress" min="0" max="1000" value="0">
+        <div id="simCurrentDate"></div>
+        <div id="simEventFlash"></div>
       </div>
     </div>
   </div>
@@ -873,6 +919,144 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
   document.getElementById('eventDate').value = '';
   renderEventsList();
 });
+
+// ─── Simulation ───────────────────────────────────────────────────────────────
+(function() {
+  let rafId = null, playing = false;
+  let durationMs = 20000, startWallTime = 0, progressFrac = 0;
+  let savedDays = undefined; // undefined = not yet started
+  let milestones = [], lastMilestoneIdx = -1, flashTimer = null;
+
+  function getRange() {
+    const sv = document.getElementById('simStart').value;
+    const ev = document.getElementById('simEnd').value;
+    if (!sv || !ev) return null;
+    const [sy,sm,sd] = sv.split('-').map(Number);
+    const [ey,em,ed] = ev.split('-').map(Number);
+    const start = daysFromDate(sy,sm,sd,12,0), end = daysFromDate(ey,em,ed,12,0);
+    return end > start ? { start, end } : null;
+  }
+
+  function lastIdxWhere(arr, pred) {
+    for (let i = arr.length - 1; i >= 0; i--) if (pred(arr[i])) return i;
+    return -1;
+  }
+
+  function buildMilestones() {
+    const r = getRange(); if (!r) return;
+    milestones = [];
+    if (document.getElementById('simHolidays').checked) {
+      const sy = new Date(J2000().getTime() + r.start * 86400000).getFullYear();
+      const ey = new Date(J2000().getTime() + r.end   * 86400000).getFullYear();
+      for (let y = sy; y <= ey; y++)
+        getHolidaysForYear(y).forEach(h => { if (h.days >= r.start && h.days <= r.end) milestones.push({ days: h.days, label: h.label, type: 'holiday' }); });
+      loadCustomEvents().forEach(e => { if (e.days >= r.start && e.days <= r.end) milestones.push({ days: e.days, label: e.label, type: 'holiday' }); });
+    }
+    if (document.getElementById('simSaved').checked)
+      loadSaved().forEach(e => { if (e.days >= r.start && e.days <= r.end) milestones.push({ days: e.days, label: e.label, type: 'saved' }); });
+    milestones.sort((a, b) => a.days - b.days);
+    const span = r.end - r.start;
+    const el = document.getElementById('simMarkers');
+    el.innerHTML = '';
+    milestones.forEach(m => {
+      const mk = document.createElement('div');
+      mk.className = 'sim-marker ' + m.type;
+      mk.style.left = ((m.days - r.start) / span * 100) + '%';
+      mk.title = m.label;
+      el.appendChild(mk);
+    });
+  }
+
+  function flash(label) {
+    const el = document.getElementById('simEventFlash');
+    el.textContent = '✦ ' + label;
+    clearTimeout(flashTimer);
+    flashTimer = setTimeout(() => { el.textContent = ''; }, 2500);
+  }
+
+  function setDay(days) {
+    customDaysSinceJ2000 = days;
+    document.getElementById('customDate').value = daysToInputVal(days);
+    document.getElementById('customTime').value = '12:00';
+    document.getElementById('error').style.display = 'none';
+    document.getElementById('simCurrentDate').textContent = daysToDateStr(days);
+  }
+
+  function tick(now) {
+    const r = getRange(); if (!r) return;
+    const t = Math.min((now - startWallTime) / durationMs, 1);
+    progressFrac = t;
+    const days = r.start + t * (r.end - r.start);
+    setDay(days);
+    document.getElementById('simProgress').value = Math.round(t * 1000);
+    const idx = lastIdxWhere(milestones, m => m.days <= days);
+    if (idx > lastMilestoneIdx) { lastMilestoneIdx = idx; flash(milestones[idx].label); }
+    if (t < 1) { rafId = requestAnimationFrame(tick); }
+    else { playing = false; rafId = null; updateBtns(); }
+  }
+
+  function play() {
+    if (playing) return;
+    const r = getRange(); if (!r) return;
+    durationMs = (parseFloat(document.getElementById('simDuration').value) || 20) * 1000;
+    if (savedDays === undefined) savedDays = customDaysSinceJ2000;
+    buildMilestones();
+    lastMilestoneIdx = lastIdxWhere(milestones, m => m.days <= (r.start + progressFrac * (r.end - r.start)));
+    playing = true;
+    startWallTime = performance.now() - progressFrac * durationMs;
+    rafId = requestAnimationFrame(tick);
+    updateBtns();
+  }
+
+  function pause() {
+    if (!playing) return;
+    playing = false;
+    cancelAnimationFrame(rafId); rafId = null;
+    updateBtns();
+  }
+
+  function stop() {
+    playing = false; progressFrac = 0; lastMilestoneIdx = -1;
+    if (rafId) { cancelAnimationFrame(rafId); rafId = null; }
+    customDaysSinceJ2000 = savedDays !== undefined ? savedDays : null;
+    savedDays = undefined;
+    document.getElementById('customDate').value = customDaysSinceJ2000 !== null ? daysToInputVal(customDaysSinceJ2000) : '';
+    document.getElementById('simProgress').value = 0;
+    document.getElementById('simCurrentDate').textContent = '';
+    document.getElementById('simEventFlash').textContent = '';
+    document.getElementById('error').style.display = 'none';
+    updateBtns();
+  }
+
+  function updateBtns() {
+    document.getElementById('simPlayBtn').disabled  = playing;
+    document.getElementById('simPauseBtn').disabled = !playing;
+  }
+
+  document.getElementById('simProgress').addEventListener('input', e => {
+    if (playing) pause();
+    const r = getRange(); if (!r) return;
+    progressFrac = parseInt(e.target.value) / 1000;
+    const days = r.start + progressFrac * (r.end - r.start);
+    setDay(days);
+    lastMilestoneIdx = lastIdxWhere(milestones, m => m.days <= days);
+  });
+
+  document.getElementById('simHeader').addEventListener('click', () => {
+    const body = document.getElementById('simBody'), arrow = document.getElementById('simArrow');
+    const open = body.classList.toggle('open');
+    arrow.classList.toggle('open', open);
+  });
+  document.getElementById('simPlayBtn').addEventListener('click', play);
+  document.getElementById('simPauseBtn').addEventListener('click', pause);
+  document.getElementById('simStopBtn').addEventListener('click', stop);
+
+  // Default to current year
+  const y = new Date().getFullYear();
+  document.getElementById('simStart').value = `${y}-01-01`;
+  document.getElementById('simEnd').value   = `${y}-12-31`;
+  updateBtns();
+})();
 
 // ─── Sidebar toggle ───────────────────────────────────────────────────────────
 (function() {
