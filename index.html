@@ -215,6 +215,27 @@
     .sc-months { font-size: 10px; color: #5566aa; flex: 1; }
     .sc-now { font-size: 9px; font-weight: bold; color: #4da; background: #0a2018; border: 1px solid #1a4030; border-radius: 3px; padding: 1px 4px; display: none; }
     .sc-now.visible { display: inline-block; }
+    #casey-overlay {
+      display: none; position: fixed; inset: 0; z-index: 9999;
+      background: rgba(0,0,0,0.88);
+      align-items: center; justify-content: center; flex-direction: column;
+      cursor: pointer;
+    }
+    #casey-overlay.active { display: flex; }
+    #casey-confetti { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    #casey-msg {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: clamp(44px, 9vw, 110px); color: #fff; text-align: center;
+      text-shadow: 0 0 40px #ff69b4, 0 0 80px #ff1493, 0 4px 0 #a0006a;
+      line-height: 1.15; position: relative; z-index: 1; pointer-events: none;
+    }
+    #casey-sub {
+      font-family: Impact, 'Arial Black', sans-serif;
+      font-size: clamp(26px, 5vw, 64px); color: #ffd700; text-align: center;
+      text-shadow: 0 0 30px #ffdd44, 0 3px 0 #996600;
+      margin-top: 18px; position: relative; z-index: 1; pointer-events: none;
+    }
+    #casey-dismiss { font-size: 13px; color: #556; margin-top: 28px; position: relative; z-index: 1; font-family: Arial, sans-serif; }
   </style>
 </head>
 <body>
@@ -586,6 +607,7 @@ document.getElementById('saveCurrentBtn').addEventListener('click', () => {
   saved.unshift({ label, days, savedAt: Date.now() });
   storeSaved(saved);
   document.getElementById('saveName').value = '';
+  if (window._checkBirthday) window._checkBirthday(days);
   msg.textContent = `Saved "${label}"`;
   msg.style.color = '#5a5';
   setTimeout(() => { msg.textContent = ''; }, 2500);
@@ -1395,6 +1417,73 @@ new p5(function(sk) {
     }
   }, { passive: false });
 })();
+
+// ── Casey's Birthday Easter Egg ───────────────────────────────────────────────
+(function() {
+  // Birth: April 10 1990 3:53pm MDT (UTC-6) = 21:53 UTC
+  const CASEY_BIRTH_MS = Date.UTC(1990, 3, 10, 21, 53);
+  const J2000_MS = Date.UTC(2000, 0, 1, 12, 0);
+
+  function checkBirthday(days) {
+    const d = new Date(J2000_MS + days * 86400000);
+    if (d.getMonth() !== 3 || d.getDate() !== 10) return;
+    const savedMs = J2000_MS + days * 86400000;
+    const age = Math.floor((savedMs - CASEY_BIRTH_MS) / (365.25 * 86400000));
+    document.getElementById('casey-age').textContent = age;
+    const overlay = document.getElementById('casey-overlay');
+    overlay.classList.add('active');
+    startConfetti();
+    const timer = setTimeout(dismiss, 15000);
+    overlay.addEventListener('click', () => { clearTimeout(timer); dismiss(); }, { once: true });
+  }
+
+  function dismiss() {
+    document.getElementById('casey-overlay').classList.remove('active');
+    stopConfetti();
+  }
+
+  let raf = null;
+  function startConfetti() {
+    const cv = document.getElementById('casey-confetti');
+    cv.width = window.innerWidth; cv.height = window.innerHeight;
+    const ctx = cv.getContext('2d');
+    const colors = ['#ff6b9d','#ffd700','#00e5ff','#ff4500','#adff2f','#ff69b4','#ff1493','#7fff00','#ffffff'];
+    const particles = Array.from({length: 250}, () => ({
+      x: Math.random() * cv.width, y: Math.random() * cv.height - cv.height,
+      w: Math.random() * 14 + 6, h: Math.random() * 7 + 3,
+      color: colors[Math.floor(Math.random() * colors.length)],
+      rot: Math.random() * Math.PI * 2, rotV: (Math.random() - 0.5) * 0.18,
+      vy: Math.random() * 3.5 + 1.5, vx: (Math.random() - 0.5) * 2.5,
+    }));
+    function frame() {
+      ctx.clearRect(0, 0, cv.width, cv.height);
+      particles.forEach(p => {
+        p.y += p.vy; p.x += p.vx; p.rot += p.rotV;
+        if (p.y > cv.height) { p.y = -12; p.x = Math.random() * cv.width; }
+        ctx.save(); ctx.translate(p.x, p.y); ctx.rotate(p.rot);
+        ctx.fillStyle = p.color; ctx.fillRect(-p.w/2, -p.h/2, p.w, p.h);
+        ctx.restore();
+      });
+      raf = requestAnimationFrame(frame);
+    }
+    frame();
+  }
+
+  function stopConfetti() {
+    if (raf) { cancelAnimationFrame(raf); raf = null; }
+    const cv = document.getElementById('casey-confetti');
+    cv.getContext('2d').clearRect(0, 0, cv.width, cv.height);
+  }
+
+  window._checkBirthday = checkBirthday;
+})();
 </script>
+
+<div id="casey-overlay">
+  <canvas id="casey-confetti"></canvas>
+  <div id="casey-msg">🎂 Casey's Birthday!</div>
+  <div id="casey-sub">He would be <span id="casey-age"></span> years old today!</div>
+  <div id="casey-dismiss">click anywhere to dismiss</div>
+</div>
 </body>
 </html>
