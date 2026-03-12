@@ -530,12 +530,20 @@ function renderSavedList() {
     });
   });
 }
+const SAVED_MAX = 20;
 document.getElementById('saveCurrentBtn').addEventListener('click', () => {
   const label = document.getElementById('saveName').value.trim();
   const msg = document.getElementById('saveMsg');
   if (!label) { msg.textContent = 'Enter a label first.'; msg.style.color='#f87'; return; }
   const days = getPrimaryDays();
   const saved = loadSaved();
+  if (saved.length >= SAVED_MAX) {
+    const oldest = saved[saved.length - 1];
+    const oldestDate = Math.abs(oldest.days / 365.25) > 10000 ? `Year ${Math.round(2000 + oldest.days / 365.25)}` : daysToDateStr(oldest.days);
+    const ok = window.confirm(`You have ${SAVED_MAX} saved dates (the maximum).\n\nOverwrite the oldest entry?\n"${oldest.label}" (${oldestDate})`);
+    if (!ok) { msg.textContent = 'Save cancelled.'; msg.style.color='#778'; setTimeout(() => { msg.textContent = ''; }, 2000); return; }
+    saved.pop();
+  }
   saved.unshift({ label, days, savedAt: Date.now() });
   storeSaved(saved);
   document.getElementById('saveName').value = '';
