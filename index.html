@@ -215,6 +215,18 @@
     .sc-months { font-size: 10px; color: #5566aa; flex: 1; }
     .sc-now { font-size: 9px; font-weight: bold; color: #4da; background: #0a2018; border: 1px solid #1a4030; border-radius: 3px; padding: 1px 4px; display: none; }
     .sc-now.visible { display: inline-block; }
+    .event-item { display:flex; align-items:center; gap:5px; padding:4px 0; border-bottom:1px solid #0d0d1a; }
+    .event-item-info { flex:1; min-width:0; cursor:pointer; }
+    .event-item-info:hover .event-item-name { color:#bbf; }
+    .event-item-name { font-size:12px; color:#99a; font-family:Arial,sans-serif; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+    .event-item-date { font-size:10px; color:#445; font-family:Arial,sans-serif; }
+    .event-item.custom .event-item-name { color:#aab; }
+    .ev-btn { font-size:10px; padding:2px 6px; flex-shrink:0; }
+    .ev-del { color:#f66 !important; border-color:#3a2020 !important; }
+    #eventsYearLabel { font-size:10px; color:#445; font-family:Arial,sans-serif; margin-bottom:6px; }
+    #addEventForm { display:flex; flex-direction:column; gap:4px; margin-top:8px; }
+    #addEventForm input[type="text"], #addEventForm input[type="date"] { width:100%; box-sizing:border-box; background:#06060f; border:1px solid #1e1e2e; color:#88a; font-size:11px; padding:4px 6px; border-radius:4px; font-family:Arial,sans-serif; }
+    #addEventForm .add-row { display:flex; gap:5px; }
     #casey-overlay {
       display: none; position: fixed; inset: 0; z-index: 9999;
       background: rgba(0,0,0,0.88);
@@ -304,6 +316,26 @@
       <div class="accordion-section" style="padding-top:8px;">
         <input type="text" id="histSearch" placeholder="Search events…">
         <div id="histList"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel accordion-panel">
+    <div class="accordion-header" id="eventsHeader">
+      <span class="accordion-title">&#128197; Holidays &amp; Events</span>
+      <span class="accordion-arrow" id="eventsArrow">&#9658;</span>
+    </div>
+    <div class="accordion-body" id="eventsBody">
+      <div class="accordion-section" style="padding-top:8px;">
+        <div id="eventsYearLabel"></div>
+        <div id="eventsList"></div>
+        <div id="addEventForm">
+          <input type="text" id="eventLabel" placeholder="Event name (e.g. Family Camping Trip)">
+          <div class="add-row">
+            <input type="date" id="eventDate" style="flex:1;">
+            <button id="addEventBtn" class="ev-btn">Add</button>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -747,6 +779,100 @@ document.getElementById('histHeader').addEventListener('click', () => {
 });
 document.getElementById('histSearch').addEventListener('input', e => renderHistList(e.target.value));
 renderHistList('');
+
+// ─── Holidays & Events ────────────────────────────────────────────────────────
+const EVENTS_KEY = 'solarClockCustomEvents';
+function loadCustomEvents() { try { return JSON.parse(localStorage.getItem(EVENTS_KEY)) || []; } catch(e) { return []; } }
+function storeCustomEvents(arr) { localStorage.setItem(EVENTS_KEY, JSON.stringify(arr)); }
+
+function nthWeekday(year, month, weekday, n) {
+  if (n > 0) {
+    const d = new Date(year, month, 1), offset = (weekday - d.getDay() + 7) % 7;
+    return 1 + offset + (n - 1) * 7;
+  } else {
+    const d = new Date(year, month + 1, 0), offset = (d.getDay() - weekday + 7) % 7;
+    return d.getDate() - offset;
+  }
+}
+
+function getHolidaysForYear(year) {
+  return [
+    { label: "New Year's Day",    m: 1,  d: 1 },
+    { label: "MLK Day",           m: 1,  d: nthWeekday(year, 0, 1, 3) },
+    { label: "Presidents' Day",   m: 2,  d: nthWeekday(year, 1, 1, 3) },
+    { label: "St. Patrick's Day", m: 3,  d: 17 },
+    { label: "Memorial Day",      m: 5,  d: nthWeekday(year, 4, 1, -1) },
+    { label: "Juneteenth",        m: 6,  d: 19 },
+    { label: "Independence Day",  m: 7,  d: 4 },
+    { label: "Labor Day",         m: 9,  d: nthWeekday(year, 8, 1, 1) },
+    { label: "Columbus Day",      m: 10, d: nthWeekday(year, 9, 1, 2) },
+    { label: "Halloween",         m: 10, d: 31 },
+    { label: "Veterans Day",      m: 11, d: 11 },
+    { label: "Thanksgiving",      m: 11, d: nthWeekday(year, 10, 4, 4) },
+    { label: "Christmas",         m: 12, d: 25 },
+    { label: "New Year's Eve",    m: 12, d: 31 },
+  ].map(h => ({ label: h.label, days: daysFromDate(year, h.m, h.d), builtin: true }));
+}
+
+function renderEventsList() {
+  const list = document.getElementById('eventsList');
+  if (!list) return;
+  const year = new Date(J2000().getTime() + getPrimaryDays() * 86400000).getFullYear();
+  document.getElementById('eventsYearLabel').textContent = year;
+  const all = [...getHolidaysForYear(year), ...loadCustomEvents()].sort((a, b) => a.days - b.days);
+  list.innerHTML = '';
+  all.forEach(ev => {
+    const item = document.createElement('div');
+    item.className = 'event-item' + (ev.builtin ? '' : ' custom');
+    item.innerHTML = `
+      <div class="event-item-info" title="View ${ev.label}">
+        <div class="event-item-name">${ev.label}</div>
+        <div class="event-item-date">${daysToDateStr(ev.days)}</div>
+      </div>
+      <div style="display:flex;gap:3px;">
+        <button class="ev-btn ev-go" data-days="${ev.days}">→</button>
+        ${ev.builtin ? '' : `<button class="ev-btn ev-del ev-rm" data-days="${ev.days}" data-label="${encodeURIComponent(ev.label)}">✕</button>`}
+      </div>`;
+    list.appendChild(item);
+  });
+  list.querySelectorAll('.ev-go').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const days = parseFloat(btn.dataset.days);
+      customDaysSinceJ2000 = days;
+      document.getElementById('customDate').value = Math.abs(days / 365.25) < 100000 ? daysToInputVal(days) : '';
+      document.getElementById('customTime').value = '12:00';
+      document.getElementById('error').style.display = 'none';
+    });
+  });
+  list.querySelectorAll('.ev-rm').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const days = parseFloat(btn.dataset.days);
+      const label = decodeURIComponent(btn.dataset.label);
+      storeCustomEvents(loadCustomEvents().filter(e => !(e.days === days && e.label === label)));
+      renderEventsList();
+    });
+  });
+}
+
+document.getElementById('eventsHeader').addEventListener('click', () => {
+  const body = document.getElementById('eventsBody'), arrow = document.getElementById('eventsArrow');
+  const open = body.classList.toggle('open');
+  arrow.classList.toggle('open', open);
+  if (open) renderEventsList();
+});
+
+document.getElementById('addEventBtn').addEventListener('click', () => {
+  const label = document.getElementById('eventLabel').value.trim();
+  const dateVal = document.getElementById('eventDate').value;
+  if (!label || !dateVal) return;
+  const [y, mo, d] = dateVal.split('-').map(Number);
+  const custom = loadCustomEvents();
+  custom.push({ label, days: daysFromDate(y, mo, d) });
+  storeCustomEvents(custom);
+  document.getElementById('eventLabel').value = '';
+  document.getElementById('eventDate').value = '';
+  renderEventsList();
+});
 
 // ─── Sidebar toggle ───────────────────────────────────────────────────────────
 (function() {
