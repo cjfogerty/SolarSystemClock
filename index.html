@@ -2603,6 +2603,11 @@ new p5(function(sk) {
 // ─── Tutorial / Guided Tour ──────────────────────────────────────────────────
 (function() {
   const TOUR_KEY = 'solarClockTourDone';
+    // Detect embedded/widget mode
+  const params = new URLSearchParams(window.location.search);
+  const isEmbedded =
+    window.self !== window.top ||      // inside an iframe
+    params.get('embedded') === '1';    // explicit query flag
 
   const STEPS = [
     { target: '#canvas-wrap',
@@ -2907,9 +2912,11 @@ new p5(function(sk) {
     if (e.key === 'ArrowLeft' && currentStep > 0) showStep(currentStep - 1);
   });
 
-  // Auto-start on first visit
-  if (!localStorage.getItem(TOUR_KEY)) {
+  // Auto-start on first visit (but not when embedded as a widget)
+  if (!isEmbedded && !localStorage.getItem(TOUR_KEY)) {
     setTimeout(startTour, 1500);
+  }
+})();
   }
 })();
 </script>
