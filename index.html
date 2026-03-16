@@ -1547,6 +1547,7 @@ new p5(function(sk) {
     window._simScaleFactor = scaleFactor;
 
     drawStars(sk);
+    drawMonthWedges(sk, monthAngles);
     drawCalendarOverlay(sk, primaryDays, rotOff, monthAngles);
     drawAnalogClock(sk, primaryDays, rotOff, monthAngles);
     drawBrightStars(sk);
@@ -1875,14 +1876,40 @@ new p5(function(sk) {
     sk.fill(160, 160, 220); sk.ellipse(0, 0, 4, 4);
   }
 
+  // Subtle alternating month wedges — from center out through the whole clock
+  function drawMonthWedges(sk, monthAngles) {
+    const outerR = 455; // just inside the calendar tick ring
+    for (let mi = 0; mi < 12; mi++) {
+      const startA = monthAngles[mi];
+      const endA = mi < 11 ? monthAngles[mi + 1] : monthAngles[0] + Math.PI * 2;
+      // Alternate: even months get a very subtle warm tint, odd months a cool tint
+      if (mi % 2 === 0) {
+        sk.fill(20, 18, 35, 10);
+      } else {
+        sk.fill(10, 12, 25, 10);
+      }
+      sk.noStroke();
+      sk.beginShape();
+      sk.vertex(0, 0);
+      for (let a = startA; a <= endA + 0.01; a += 0.04) {
+        sk.vertex(Math.cos(a) * outerR, Math.sin(a) * outerR);
+      }
+      sk.vertex(Math.cos(endA) * outerR, Math.sin(endA) * outerR);
+      sk.endShape(sk.CLOSE);
+    }
+  }
+
   function drawCalendarOverlay(sk, primaryDays, rotOff, monthAngles) {
     const tickInner = 460, tickOuter = 480, labelR = 502;
 
-    for (let qi = 0; qi < 4; qi++) {
-      const startA = monthAngles[quarterIdx[qi]];
-      const endA   = monthAngles[quarterIdx[(qi+1)%4]] + (qi===3 ? Math.PI*2 : 0);
+    // Per-month tinted arcs on the calendar ring — alternating brightness within each quarter
+    for (let mi = 0; mi < 12; mi++) {
+      const qi = Math.floor(mi / 3); // which quarter this month belongs to
       const [r,g,b] = QUARTER_COLORS[qi];
-      sk.noFill(); sk.stroke(r, g, b, 24); sk.strokeWeight(18);
+      const startA = monthAngles[mi];
+      const endA = mi < 11 ? monthAngles[mi + 1] : monthAngles[0] + Math.PI * 2;
+      const alpha = mi % 2 === 0 ? 28 : 18; // alternating intensity
+      sk.noFill(); sk.stroke(r, g, b, alpha); sk.strokeWeight(18);
       sk.arc(0, 0, tickInner*2, tickInner*2, startA, endA);
       sk.strokeWeight(1);
     }
