@@ -1615,12 +1615,6 @@ new p5(function(sk) {
     drawMonthWedges(sk, monthAngles);
     drawCalendarOverlay(sk, primaryDays, rotOff, monthAngles);
     drawAnalogClock(sk, primaryDays, rotOff, monthAngles);
-    // Dim everything except constellation stars during that tour step
-    if (window._tourHighlight === 'stars') {
-      sk.push(); sk.resetMatrix(); sk.fill(2, 2, 8, 160); sk.noStroke();
-      sk.rect(0, 0, canvasSize, canvasSize); sk.pop();
-      sk.translate(CX * scaleFactor, CY * scaleFactor); sk.scale(scaleFactor);
-    }
     drawBrightStars(sk);
     drawSimHighlights(sk, primaryDays, monthAngles);
     drawSun(sk);
@@ -1644,6 +1638,34 @@ new p5(function(sk) {
   function drawBrightStars(sk) {
     const t = sk.millis() * 0.001;
     const starHL = window._tourHighlight === 'stars';
+
+    // Seasonal crescent focus rings during tour highlight
+    if (starHL) {
+      const groups = [
+        { a1: -1.25, a2: -0.30 },  // Winter: upper-right
+        { a1:  0.30, a2:  1.25 },  // Spring: lower-right
+        { a1:  1.90, a2:  2.80 },  // Summer: lower-left
+        { a1: -2.80, a2: -1.90 },  // Autumn: upper-left
+      ];
+      const pulse = 0.65 + 0.35 * Math.sin(t * 1.6);
+      groups.forEach(g => {
+        sk.push();
+        sk.noFill();
+        // outer diffuse glow
+        sk.stroke(160, 200, 255, 12 * pulse); sk.strokeWeight(34);
+        sk.arc(0, 0, 1120, 1120, g.a1, g.a2, sk.OPEN);
+        sk.stroke(185, 215, 255, 28 * pulse); sk.strokeWeight(16);
+        sk.arc(0, 0, 1120, 1120, g.a1, g.a2, sk.OPEN);
+        // bright outer crescent line
+        sk.stroke(215, 238, 255, 135 * pulse); sk.strokeWeight(2.5);
+        sk.arc(0, 0, 1124, 1124, g.a1, g.a2, sk.OPEN);
+        // inner crescent line
+        sk.stroke(190, 220, 255, 80 * pulse); sk.strokeWeight(1.5);
+        sk.arc(0, 0, 1055, 1055, g.a1, g.a2, sk.OPEN);
+        sk.pop();
+      });
+    }
+
     BRIGHT_STARS_DATA.forEach((s, i) => {
       const twinkle = 0.72 + 0.28 * Math.sin(t * 1.4 + i * 0.9);
       const hovered = (i === _hoveredStarIdx);
@@ -2262,7 +2284,7 @@ new p5(function(sk) {
     // Check planets using primaryPos (set during drawPlanets)
     for (const p of PLANETS) {
       const pos = window._primaryPos && window._primaryPos[p.name];
-      if (pos && Math.hypot(dx - pos.x, dy - pos.y) < p.size + 8) return p;
+      if (pos && Math.hypot(dx - pos.x, dy - pos.y) < p.size * 2 + 10) return p;
     }
     return null;
   }
@@ -2386,9 +2408,6 @@ new p5(function(sk) {
     }
   }, { passive: false });
 })();
-
-// Expose primaryPos for planet hover hit testing
-window._primaryPos = null;
 
 // ── Casey's Birthday Easter Egg ───────────────────────────────────────────────
 (function() {
