@@ -118,9 +118,9 @@
       body { flex-direction: column; align-items: stretch; padding: 0; gap: 0; padding-left: 0; }
       #sidebarToggle { display: none; }
 
-      /* Canvas: fill viewport above buttons + sheet peek */
-      #canvas-wrap { align-items: center; justify-content: flex-start; padding-top: 4px; height: calc(100dvh - 96px); min-height: calc(100dvh - 96px); }
-      canvas { max-width: 100vw; max-height: calc(100dvh - 104px); width: auto; height: auto; }
+      /* Canvas: fill viewport above sheet handle */
+      #canvas-wrap { align-items: center; justify-content: flex-start; padding-top: 4px; height: calc(100dvh - 52px); min-height: calc(100dvh - 52px); }
+      canvas { max-width: 100vw; max-height: calc(100dvh - 60px); width: auto; height: auto; }
 
       /* Sidebar becomes bottom sheet */
       #sidebar {
@@ -135,18 +135,35 @@
       #sidebar.collapsed { width: 100%; height: auto; margin: 0; opacity: 1; pointer-events: auto; transform: translateY(calc(100% - 52px)); }
       body.sheet-open #sidebar.collapsed { transform: translateY(0); }
 
-      /* Sheet handle */
+      /* Sheet handle — prominent, with inline Tour/Feedback */
       #sheet-handle-bar {
-        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px;
         height: 52px; cursor: pointer; user-select: none; flex-shrink: 0;
-        position: sticky; top: 0; z-index: 10; background: #08080f;
-        border-radius: 16px 16px 0 0; border-bottom: 1px solid #111118;
+        position: sticky; top: 0; z-index: 10;
+        background: linear-gradient(180deg, #111228, #08080f);
+        border-radius: 16px 16px 0 0; border-bottom: 1px solid #1a1a30;
         margin: 0 -10px 8px -10px; padding: 0 10px; touch-action: none;
       }
-      .sheet-handle-pill { width: 36px; height: 4px; background: #333348; border-radius: 2px; transition: background 0.15s; }
-      #sheet-handle-bar:hover .sheet-handle-pill, #sheet-handle-bar:active .sheet-handle-pill { background: #5566aa; }
-      #sheet-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: #556; font-family: Arial, sans-serif; }
-      body.sheet-open #sheet-label { color: #778; }
+      .sheet-handle-pill { width: 40px; height: 5px; background: #4455aa; border-radius: 3px; transition: background 0.15s; }
+      #sheet-handle-bar:hover .sheet-handle-pill, #sheet-handle-bar:active .sheet-handle-pill { background: #6677cc; }
+      #sheet-label { font-size: 11px; text-transform: uppercase; letter-spacing: 0.18em; color: #8899cc; font-family: Arial, sans-serif; font-weight: 500; }
+      body.sheet-open #sheet-label { color: #aabbee; }
+
+      /* Tour/Feedback inside sheet handle row */
+      .sheet-handle-btns { display: flex; gap: 12px; margin-top: 1px; }
+      .sheet-handle-btns a, .sheet-handle-btns button {
+        background: none !important; border: none !important; box-shadow: none !important;
+        color: #445 !important; font-size: 10px !important; padding: 0 !important;
+        min-height: auto !important; font-family: Arial, sans-serif;
+        text-decoration: none; cursor: pointer; letter-spacing: 0.06em;
+      }
+      .sheet-handle-btns #tour-trigger { color: #5566aa !important; }
+      .sheet-handle-btns #tour-trigger:hover { color: #8899dd !important; }
+      .sheet-handle-btns #feedback-btn { color: #334 !important; }
+      .sheet-handle-btns #feedback-btn:hover { color: #556 !important; }
+
+      /* Hide the fixed bottom-btns container on mobile — buttons are in the handle */
+      #bottom-btns { display: none !important; }
 
       /* Backdrop */
       #sheet-backdrop { display: none; position: fixed; inset: 0; z-index: 399; background: rgba(0,0,0,0); }
@@ -161,41 +178,6 @@
       .panel { padding: 8px 10px; }
       .panel h3 { margin-bottom: 6px; }
       input[type="range"] { height: 28px; width: 100%; }
-
-      /* Bottom buttons: prominent bar just above the sheet handle */
-      #bottom-btns {
-        position: fixed; bottom: 54px; left: 0; right: 0;
-        display: flex; justify-content: center; gap: 8px;
-        padding: 6px 12px; z-index: 398;
-      }
-      #bottom-btns button, #bottom-btns a { flex: none; }
-      #tour-trigger {
-        background: rgba(20,22,50,0.92) !important;
-        border: 1px solid #3344aa !important;
-        color: #aabcff !important;
-        font-size: 13px !important;
-        padding: 8px 18px !important;
-        border-radius: 20px !important;
-        font-weight: 500;
-        box-shadow: 0 2px 10px rgba(40,60,180,0.3);
-      }
-      #tour-trigger:hover { color: #dde8ff !important; background: rgba(26,34,80,0.95) !important; }
-      #sheet-handle-bar {
-        background: linear-gradient(180deg, #0e0f1e, #08080f);
-        border-bottom: 1px solid #1a1a30;
-      }
-      #sheet-label {
-        font-size: 11px; color: #7788bb; letter-spacing: 0.16em;
-      }
-      .sheet-handle-pill { width: 40px; height: 5px; background: #4455aa; }
-      #feedback-btn {
-        background: rgba(10,10,18,0.7) !important;
-        border: 1px solid #1a1a28 !important;
-        color: #334 !important;
-        font-size: 11px !important;
-        padding: 8px 14px !important;
-        border-radius: 20px !important;
-      }
 
       /* Tour: mobile layout */
       #tour-box { width: calc(100vw - 24px); max-width: 360px; }
@@ -1525,7 +1507,7 @@ new p5(function(sk) {
     if (isMobile) {
       availW = window.innerWidth - 8;
       const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
-      availH = vh - 96 - 8; // 52px sheet peek + 44px button bar
+      availH = vh - 52 - 8; // 52px sheet peek
     }
     else {
       const sidebarEl = document.getElementById('sidebar');
@@ -2221,6 +2203,21 @@ new p5(function(sk) {
   handleBar.setAttribute('tabindex', '0');
   handleBar.innerHTML = '<div class="sheet-handle-pill"></div><span id="sheet-label">Controls</span>';
   sidebar.insertBefore(handleBar, sidebar.firstChild);
+
+  // Move Tour + Feedback buttons into the handle bar on mobile
+  const bottomBtns = document.getElementById('bottom-btns');
+  if (bottomBtns) {
+    const btnRow = document.createElement('div');
+    btnRow.className = 'sheet-handle-btns';
+    const tourBtn = document.getElementById('tour-trigger');
+    const feedbackBtn = document.getElementById('feedback-btn');
+    if (tourBtn) btnRow.appendChild(tourBtn);
+    if (feedbackBtn) btnRow.appendChild(feedbackBtn);
+    handleBar.appendChild(btnRow);
+    // Stop clicks on tour/feedback from toggling the sheet
+    btnRow.addEventListener('click', e => e.stopPropagation());
+    btnRow.addEventListener('touchend', e => e.stopPropagation());
+  }
 
   // Inject backdrop
   const backdrop = document.createElement('div');
