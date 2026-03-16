@@ -2601,7 +2601,6 @@ new p5(function(sk) {
 })();
 
 // ─── Tutorial / Guided Tour ──────────────────────────────────────────────────
-// ─── Tutorial / Guided Tour ──────────────────────────────────────────────────
 (function() {
   const TOUR_KEY = 'solarClockTourDone';
 
@@ -2898,13 +2897,10 @@ new p5(function(sk) {
   if (!isEmbedded && !localStorage.getItem(TOUR_KEY)) {
     setTimeout(startTour, 1500);
   }
-})();
 
-  // Auto-start on first visit (but not when embedded as a widget)
-  if (!isEmbedded && !localStorage.getItem(TOUR_KEY)) {
-    setTimeout(startTour, 1500);
-  }
-})();
+  // Hide tour trigger button when embedded
+  if (isEmbedded) {
+    trigger.style.display = 'none';
   }
 })();
 </script>
