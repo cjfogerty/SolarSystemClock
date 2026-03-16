@@ -2361,8 +2361,18 @@ new p5(function(sk) {
     btnNext.textContent = idx === STEPS.length - 1 ? 'Done' : 'Next \u2192';
     updateDots();
 
-    // Small delay to let scroll/layout settle
-    requestAnimationFrame(() => {
+    // On mobile: close sheet for clock steps, open for sidebar steps
+    if (window.innerWidth <= 700 && typeof window._sheetOpen === 'function') {
+      const isCanvasStep = step.target.startsWith('canvas-') || step.target === '#canvas-wrap' || step.target === '#tour-trigger';
+      if (isCanvasStep && window._sheetIsOpen()) {
+        window._sheetClose();
+      } else if (!isCanvasStep && !window._sheetIsOpen()) {
+        window._sheetOpen();
+      }
+    }
+
+    // Delay to let sheet animation and scroll settle
+    setTimeout(() => {
       const rect = getTargetRect(step);
       if (!rect) {
         highlight.style.display = 'none';
@@ -2429,7 +2439,7 @@ new p5(function(sk) {
       }
       box.style.left = bx + 'px';
       box.style.top  = by + 'px';
-    });
+    }, window.innerWidth <= 700 ? 380 : 16);
   }
 
   function startTour() {
@@ -2443,6 +2453,10 @@ new p5(function(sk) {
     box.style.display = 'none';
     arrowEl.style.display = 'none';
     localStorage.setItem(TOUR_KEY, '1');
+    // Close sheet on mobile when tour ends
+    if (window.innerWidth <= 700 && typeof window._sheetClose === 'function' && window._sheetIsOpen()) {
+      window._sheetClose();
+    }
   }
 
   btnNext.addEventListener('click', e => {
