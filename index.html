@@ -122,9 +122,9 @@
       #canvas-wrap { align-items: center; justify-content: flex-start; padding-top: 4px; height: calc(100dvh - 44px); min-height: calc(100dvh - 44px); }
       canvas { max-width: 100vw; max-height: calc(100dvh - 52px); width: auto; height: auto; }
 
-      /* Sidebar becomes bottom sheet */
+      /* Sidebar becomes bottom sheet — opens just below clock face */
       #sidebar {
-        position: fixed; bottom: 0; left: 0; right: 0; width: 100%; max-height: 82vh; z-index: 400;
+        position: fixed; bottom: 0; left: 0; right: 0; width: 100%; max-height: 55vh; z-index: 400;
         overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
         border-radius: 16px 16px 0 0; background: #08080f; border-top: 1px solid #1e1e2e;
         box-shadow: 0 -8px 40px rgba(0,0,0,0.7); padding: 0 10px 24px 10px;
@@ -149,15 +149,17 @@
       #sheet-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.16em; color: #7788bb; font-family: Arial, sans-serif; }
       body.sheet-open #sheet-label { color: #99aadd; }
 
-      /* Tour/Feedback: canvas overlay, bottom-right (opposite digital clock) */
+      /* Tour/Feedback: bottom-right of canvas, same row as digital clock */
       #bottom-btns {
-        position: absolute !important; bottom: 10px; right: 10px; left: auto;
-        z-index: 50; display: flex !important; gap: 6px;
+        position: absolute !important; bottom: 6px; right: 6px; left: auto;
+        z-index: 50; display: flex !important; gap: 4px; align-items: center;
+        padding: 0 !important;
       }
       #bottom-btns button, #bottom-btns a {
-        background: rgba(4,5,14,0.75) !important; backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px);
-        border: 1px solid rgba(35,35,80,0.5) !important; border-radius: 5px !important;
-        padding: 4px 8px !important; font-size: 10px !important; min-height: auto !important;
+        background: rgba(4,5,14,0.78) !important;
+        border: 1px solid rgba(35,35,80,0.45) !important; border-radius: 6px !important;
+        padding: 5px 9px !important; font-size: 9px !important; min-height: auto !important;
+        font-family: Arial, sans-serif; line-height: 1.2;
       }
       #bottom-btns #tour-trigger { color: #6678aa !important; }
       #bottom-btns #tour-trigger:hover { color: #99bbff !important; }
