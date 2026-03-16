@@ -1796,9 +1796,63 @@ new p5(function(sk) {
 
     const monthA = clockAngle(month / 12);
     const mLen = faceR * 0.82;
-    for (let g2 = 3; g2 >= 1; g2--) { sk.stroke(180, 100, 255, 40/g2); sk.strokeWeight(g2*4); sk.line(0, 0, Math.cos(monthA)*mLen, Math.sin(monthA)*mLen); }
-    sk.stroke(200, 130, 255, 200); sk.strokeWeight(2); sk.line(0, 0, Math.cos(monthA)*mLen, Math.sin(monthA)*mLen);
-    sk.fill(200, 130, 255, 200); sk.noStroke(); sk.ellipse(Math.cos(monthA)*mLen, Math.sin(monthA)*mLen, 5, 5);
+    const mTickR = 488; // just past the calendar tick outer edge (480)
+    const mCx = Math.cos(monthA), mCy = Math.sin(monthA);
+
+    // Glow layers for the month hand — extend to tick mark
+    for (let g2 = 3; g2 >= 1; g2--) { sk.stroke(180, 100, 255, 30/g2); sk.strokeWeight(g2*3.5); sk.line(0, 0, mCx*mLen, mCy*mLen); }
+    // Solid hand to standard length
+    sk.stroke(200, 130, 255, 200); sk.strokeWeight(2); sk.line(0, 0, mCx*mLen, mCy*mLen);
+    // Thinner extension from hand tip through calendar ring to tick mark
+    sk.stroke(200, 130, 255, 120); sk.strokeWeight(1.2); sk.line(mCx*mLen, mCy*mLen, mCx*mTickR, mCy*mTickR);
+    // Tick mark at the date position
+    sk.stroke(200, 130, 255, 220); sk.strokeWeight(2.5); sk.line(mCx*458, mCy*458, mCx*mTickR, mCy*mTickR);
+    // Dot at hand tip
+    sk.fill(200, 130, 255, 200); sk.noStroke(); sk.ellipse(mCx*mLen, mCy*mLen, 5, 5);
+
+    // ── Date label on outer ring ──
+    if (live || isAncient) {
+      const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+      const curMonth = live ? live.getMonth() : Math.floor(month);
+      const curDay   = live ? live.getDate() : Math.round(((month % 1) * 30) + 1);
+      const dateLabel = MONTHS_S[Math.min(curMonth, 11)] + ' ' + curDay;
+
+      // Check proximity to nearest month label to decide if we need an offset
+      const dateLabelR = 502; // same radius as month labels
+      let nearestMonthDist = Infinity;
+      if (typeof monthAngles !== 'undefined') {
+        for (let mi2 = 0; mi2 < 12; mi2++) {
+          let ad = Math.abs(monthA - monthAngles[mi2]);
+          if (ad > Math.PI) ad = Math.PI * 2 - ad;
+          nearestMonthDist = Math.min(nearestMonthDist, ad);
+        }
+      }
+      const tooClose = nearestMonthDist < 0.22; // ~12.5° threshold
+      const lblR = tooClose ? dateLabelR + 28 : dateLabelR;
+      const lx = mCx * lblR, ly = mCy * lblR;
+
+      // Leader line if offset
+      if (tooClose) {
+        sk.stroke(180, 110, 255, 80); sk.strokeWeight(0.8);
+        for (let seg = 0; seg < 4; seg++) {
+          if (seg % 2 === 0) {
+            const r0 = mTickR + 4 + seg * 6, r1 = r0 + 4;
+            sk.line(mCx*r0, mCy*r0, mCx*r1, mCy*r1);
+          }
+        }
+      }
+
+      // Pill background
+      const pillW = 46, pillH = 18;
+      sk.noStroke(); sk.fill(4, 4, 16, 230);
+      sk.rect(lx - pillW/2, ly - pillH/2, pillW, pillH, 5);
+      sk.noFill(); sk.stroke(180, 110, 255, 160); sk.strokeWeight(0.8);
+      sk.rect(lx - pillW/2, ly - pillH/2, pillW, pillH, 5);
+      // Label text
+      sk.noStroke(); sk.fill(210, 160, 255, 240);
+      sk.textSize(11); sk.textStyle(sk.NORMAL); sk.textFont('Arial');
+      sk.text(dateLabel, lx, ly + 0.5);
+    }
 
     const hourA = clockAngle(hour / 12);
     const hLen = faceR * 0.38;
