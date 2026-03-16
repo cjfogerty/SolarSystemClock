@@ -1884,9 +1884,9 @@ new p5(function(sk) {
       const endA = mi < 11 ? monthAngles[mi + 1] : monthAngles[0] + Math.PI * 2;
       // Alternate: even months slightly lighter, odd months baseline
       if (mi % 2 === 0) {
-        sk.fill(30, 28, 55, 22);
+        sk.fill(35, 32, 65, 32);
       } else {
-        sk.fill(6, 6, 14, 6);
+        sk.fill(5, 5, 12, 5);
       }
       sk.noStroke();
       sk.beginShape();
@@ -1908,7 +1908,7 @@ new p5(function(sk) {
       const [r,g,b] = QUARTER_COLORS[qi];
       const startA = monthAngles[mi];
       const endA = mi < 11 ? monthAngles[mi + 1] : monthAngles[0] + Math.PI * 2;
-      const alpha = mi % 2 === 0 ? 38 : 20; // alternating intensity
+      const alpha = mi % 2 === 0 ? 44 : 22; // alternating intensity
       sk.noFill(); sk.stroke(r, g, b, alpha); sk.strokeWeight(18);
       sk.arc(0, 0, tickInner*2, tickInner*2, startA, endA);
       sk.strokeWeight(1);
