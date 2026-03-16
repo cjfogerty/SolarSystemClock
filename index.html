@@ -1508,6 +1508,7 @@ const CONSTELLATION_SHAPES = {
 };
 
 let _hoveredStarIdx = -1;
+let _hoveredOrbitIdx = -1;
 
 // ─────────────────────────────────────────────────────────────────────────────
 // p5 SKETCH
@@ -1723,7 +1724,17 @@ new p5(function(sk) {
       const [or,og,ob] = ORBIT_COLORS[i];
       if (!isCompare) {
         primaryPos[p.name] = { x, y };
-        sk.noFill(); sk.stroke(or, og, ob, 32); sk.strokeWeight(1); sk.ellipse(0, 0, p.radius*2, p.radius*2);
+        const orbitHovered = (i === _hoveredOrbitIdx);
+        sk.noFill();
+        if (orbitHovered) {
+          // Glow layer
+          sk.stroke(or, og, ob, 40); sk.strokeWeight(6); sk.ellipse(0, 0, p.radius*2, p.radius*2);
+          // Bright ring
+          sk.stroke(p.color[0], p.color[1], p.color[2], 140); sk.strokeWeight(1.8); sk.ellipse(0, 0, p.radius*2, p.radius*2);
+        } else {
+          sk.stroke(or, og, ob, 42); sk.strokeWeight(1); sk.ellipse(0, 0, p.radius*2, p.radius*2);
+        }
+        sk.strokeWeight(1);
         if (compareDaysSinceJ2000 !== null) {
           const cfg = planetSettings[p.name];
           if (cfg && cfg.enabled) {
@@ -2109,6 +2120,17 @@ new p5(function(sk) {
   function hideCard() {
     card.classList.remove('visible');
     _hoveredStarIdx = -1;
+    _hoveredOrbitIdx = -1;
+  }
+
+  // Orbit hover detection
+  function orbitHitTest(dx, dy) {
+    const dist = Math.hypot(dx, dy);
+    const tolerance = 18; // px in drawing space
+    for (let i = 0; i < PLANETS.length; i++) {
+      if (Math.abs(dist - PLANETS[i].radius) < tolerance) return i;
+    }
+    return -1;
   }
 
   // Mouse
@@ -2118,15 +2140,19 @@ new p5(function(sk) {
     if (e.clientX < rect.left || e.clientX > rect.right ||
         e.clientY < rect.top  || e.clientY > rect.bottom) {
       if (_hoveredStarIdx >= 0) hideCard();
+      _hoveredOrbitIdx = -1;
       return;
     }
     const dp  = toDrawing(e.clientX, e.clientY); if (!dp) return;
+    // Star hover
     const idx = hitTest(dp.x, dp.y);
     if (idx !== _hoveredStarIdx) {
       _hoveredStarIdx = idx;
       if (idx >= 0) showCard(idx, e.clientX, e.clientY);
       else           hideCard();
     }
+    // Orbit hover
+    _hoveredOrbitIdx = orbitHitTest(dp.x, dp.y);
   });
 
   // Touch – tap to show, tap outside to dismiss
