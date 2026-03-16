@@ -285,9 +285,111 @@
       margin-top: 18px; position: relative; z-index: 1; pointer-events: none;
     }
     #casey-dismiss { font-size: 13px; color: #556; margin-top: 28px; position: relative; z-index: 1; font-family: Arial, sans-serif; }
+
+    /* ── Tutorial / Guided Tour ────────────────────────────── */
+    #tour-overlay {
+      display:none; position:fixed; inset:0; z-index:8000;
+      pointer-events:none;
+    }
+    #tour-overlay.active { display:block; }
+    #tour-highlight {
+      position:fixed; z-index:8001; border-radius:8px;
+      box-shadow:0 0 0 9999px rgba(2,2,8,0.55), 0 0 32px 6px rgba(70,110,255,0.5), inset 0 0 1px rgba(100,140,255,0.3);
+      pointer-events:none; transition:all 0.4s cubic-bezier(.4,0,.2,1);
+      display:none; border:1.5px solid rgba(80,120,255,0.35);
+    }
+    #tour-box {
+      position:fixed; z-index:8002; width:320px;
+      background:linear-gradient(165deg,#10111f 0%,#0a0b14 100%);
+      border:1px solid #2a2a55; border-radius:12px;
+      box-shadow:0 12px 48px rgba(0,0,0,0.8), 0 0 1px rgba(80,120,255,0.2);
+      font-family:Arial,sans-serif; padding:18px 20px 16px;
+      display:none;
+    }
+    #tour-arrow {
+      position:fixed; z-index:8002; pointer-events:none; display:none;
+    }
+    #tour-arrow svg { overflow:visible; }
+    .tour-step {
+      font-size:10px; color:#4466aa; margin-bottom:10px; font-family:Arial,sans-serif;
+      text-transform:uppercase; letter-spacing:0.12em;
+    }
+    .tour-title {
+      font-size:15px; font-weight:bold; color:#c0d0ff; margin-bottom:8px;
+      font-family:Georgia,serif; line-height:1.3;
+    }
+    .tour-desc {
+      font-size:12.5px; color:#8899bb; line-height:1.6; margin-bottom:16px;
+    }
+    .tour-btns { display:flex; gap:8px; }
+    .tour-btns button {
+      flex:1; font-size:12px; padding:8px 0; border-radius:6px; cursor:pointer;
+      font-family:Arial,sans-serif; transition:all 0.15s; font-weight:500;
+    }
+    .tour-btn-next {
+      background:linear-gradient(180deg,#2244bb,#1a3399) !important;
+      border:1px solid #3355cc !important; color:#dde8ff !important;
+      box-shadow:0 2px 8px rgba(30,60,180,0.35);
+    }
+    .tour-btn-next:hover { background:linear-gradient(180deg,#2a55dd,#2244bb) !important; color:#fff !important; }
+    .tour-btn-skip {
+      background:transparent !important; border:1px solid #1e1e30 !important;
+      color:#556 !important; flex:0.7;
+    }
+    .tour-btn-skip:hover { color:#8899bb !important; border-color:#2a2a44 !important; }
+    .tour-btn-back {
+      background:transparent !important; border:1px solid #1e1e30 !important;
+      color:#556 !important; flex:0.7;
+    }
+    .tour-btn-back:hover { color:#8899bb !important; border-color:#2a2a44 !important; }
+    .tour-progress {
+      display:flex; gap:4px; margin-bottom:14px;
+    }
+    .tour-dot {
+      width:8px; height:8px; border-radius:50%; background:#1a1a2e; transition:all 0.3s;
+      cursor:pointer; position:relative;
+    }
+    .tour-dot:hover { background:#3355aa; transform:scale(1.4); }
+    .tour-dot.active { background:#4466cc; box-shadow:0 0 6px rgba(68,102,204,0.5); }
+    .tour-dot.done { background:#334; }
+    .tour-dot.done:hover { background:#4466cc; }
+    #bottom-btns {
+      position:fixed; bottom:14px; right:14px; z-index:500;
+      display:flex; gap:6px;
+    }
+    #bottom-btns button, #bottom-btns a {
+      background:rgba(10,10,20,0.85); border:1px solid #1a1a2e; border-radius:8px;
+      color:#445; font-size:11px; font-family:Arial,sans-serif;
+      padding:6px 12px; cursor:pointer; transition:all 0.25s;
+      backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px);
+      text-decoration:none; display:inline-block;
+    }
+    #bottom-btns button:hover, #bottom-btns a:hover {
+      color:#88aaff; border-color:#3344aa; background:rgba(16,16,32,0.92);
+      box-shadow:0 0 12px rgba(50,80,200,0.2);
+    }
+    #feedback-btn:hover { color:#88ddaa !important; border-color:#2a6644 !important; box-shadow:0 0 12px rgba(40,140,80,0.2) !important; }
   </style>
 </head>
 <body>
+
+<div id="tour-overlay"></div>
+<div id="tour-highlight"></div>
+<div id="tour-arrow"><svg width="200" height="200"><defs><marker id="tour-arrowhead" markerWidth="10" markerHeight="7" refX="9" refY="3.5" orient="auto"><polygon points="0 0, 10 3.5, 0 7" fill="#5577dd"/></marker></defs><path id="tour-arrow-path" d="" fill="none" stroke="#5577dd" stroke-width="2" stroke-dasharray="6,4" marker-end="url(#tour-arrowhead)"/></svg></div>
+<div id="tour-box">
+  <div class="tour-step" id="tour-step-label"></div>
+  <div class="tour-title" id="tour-title"></div>
+  <div class="tour-desc" id="tour-desc"></div>
+  <div class="tour-btns">
+    <button class="tour-btn-back" id="tour-back">Back</button>
+    <button class="tour-btn-skip" id="tour-skip">Skip Tour</button>
+    <button class="tour-btn-next" id="tour-next">Next</button>
+  </div>
+</div>
+<div id="bottom-btns">
+  <a id="feedback-btn" href="https://forms.gle/rjThYE4E6e8kfavG9" target="_blank" rel="noopener" title="Send feedback">Feedback</a>
+  <button id="tour-trigger" title="View guided tour">? Tour</button>
+</div>
 
 <button id="sidebarToggle" title="Toggle sidebar">◀</button>
 
@@ -345,19 +447,6 @@
   </div>
 
   <div class="panel accordion-panel">
-    <div class="accordion-header" id="histHeader">
-      <span class="accordion-title">&#9790; Historic Events</span>
-      <span class="accordion-arrow" id="histArrow">&#9658;</span>
-    </div>
-    <div class="accordion-body" id="histBody">
-      <div class="accordion-section" style="padding-top:8px;">
-        <input type="text" id="histSearch" placeholder="Search events…">
-        <div id="histList"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="panel accordion-panel">
     <div class="accordion-header" id="eventsHeader">
       <span class="accordion-title">&#128197; Holidays &amp; Events</span>
       <span class="accordion-arrow" id="eventsArrow">&#9658;</span>
@@ -406,6 +495,19 @@
         <input type="range" id="simProgress" min="0" max="1000" value="0">
         <div id="simCurrentDate"></div>
         <div id="simEventFlash"></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel accordion-panel">
+    <div class="accordion-header" id="histHeader">
+      <span class="accordion-title">&#9790; Historic Events</span>
+      <span class="accordion-arrow" id="histArrow">&#9658;</span>
+    </div>
+    <div class="accordion-body" id="histBody">
+      <div class="accordion-section" style="padding-top:8px;">
+        <input type="text" id="histSearch" placeholder="Search events…">
+        <div id="histList"></div>
       </div>
     </div>
   </div>
@@ -729,71 +831,51 @@ const HISTORIC_EVENTS = [
     { label: 'First Life on Earth', year: -3800000000, approx: '~3.8 billion BCE' },
     { label: 'Great Oxidation Event', year: -2400000000, approx: '~2.4 billion BCE' },
     { label: 'Cambrian Explosion', year: -541000000, approx: '~541 million BCE' },
-    { label: 'First Land Plants', year: -470000000, approx: '~470 million BCE' },
     { label: 'First Dinosaurs', year: -240000000, approx: '~240 million BCE' },
     { label: 'Chicxulub Impact / Dino Extinction', year: -66000000, approx: '~66 million BCE' },
-    { label: 'First Hominids (Australopithecus)', year: -4000000, approx: '~4 million BCE' },
     { label: 'First Homo Sapiens', year: -300000, approx: '~300,000 BCE' },
-    { label: 'Toba Supervolcano Eruption', year: -74000, approx: '~74,000 BCE' },
-    { label: 'Out of Africa Migration', year: -70000, approx: '~70,000 BCE' },
     { label: 'Cave Paintings — Lascaux', year: -17000, approx: '~17,000 BCE' },
   ]},
   { group: 'Ancient Civilisations', events: [
     { label: 'Agricultural Revolution Begins', year: -10000, approx: '~10,000 BCE' },
     { label: 'Göbekli Tepe (World\'s Oldest Temple)', year: -9600, approx: '~9600 BCE' },
     { label: 'First Egyptian Dynasty', year: -3100, approx: '~3100 BCE' },
-    { label: 'Stonehenge Construction Begins', year: -3000, approx: '~3000 BCE' },
     { label: 'Great Pyramid of Giza', year: -2560, approx: '~2560 BCE' },
     { label: 'Code of Hammurabi', year: -1754, approx: '~1754 BCE' },
-    { label: 'Trojan War (approx.)', year: -1184, approx: '~1184 BCE' },
     { label: 'Homer — Iliad & Odyssey', year: -750, approx: '~750 BCE' },
   ]},
   { group: 'Religion & Philosophy', events: [
-    { label: 'Rigveda Composed (Hinduism)', year: -1500, approx: '~1500 BCE' },
     { label: 'Moses & the Exodus (trad.)', year: -1446, approx: '~1446 BCE' },
     { label: 'Confucius — Birth', year: -551, approx: '551 BCE' },
     { label: 'Siddhartha Gautama — Birth', year: -563, approx: '563 BCE' },
-    { label: 'Siddhartha Gautama — Enlightenment', year: -528, approx: '528 BCE' },
     { label: 'Socrates — Birth', year: -470, approx: '470 BCE' },
-    { label: 'Aristotle — Birth', year: -384, approx: '384 BCE' },
     { label: 'Birth of Jesus Christ (trad.)', year: -4, mo: 12, d: 25, approx: 'c. 4 BCE' },
     { label: 'Crucifixion of Jesus Christ', year: 33, mo: 4, d: 3, approx: '33 CE' },
-    { label: 'Council of Nicaea', year: 325, mo: 5, d: 20, approx: '325 CE' },
     { label: 'Muhammad — Birth', year: 570, mo: 4, d: 20, approx: '570 CE' },
     { label: 'Hijra — Islam calendar begins', year: 622, mo: 9, d: 24, approx: '622 CE' },
   ]},
   { group: 'Classical & Medieval World', events: [
     { label: 'Alexander the Great — Birth', year: -356, mo: 7, d: 20, approx: '356 BCE' },
     { label: 'Julius Caesar — Assassination', year: -44, mo: 3, d: 15, approx: '44 BCE' },
-    { label: 'Augustus — First Roman Emperor', year: -27, mo: 1, d: 16, approx: '27 BCE' },
     { label: 'Eruption of Vesuvius / Pompeii', year: 79, mo: 8, d: 24, approx: '79 CE' },
     { label: 'Fall of Western Rome', year: 476, mo: 9, d: 4, approx: '476 CE' },
     { label: 'Charlemagne Crowned Emperor', year: 800, mo: 12, d: 25, approx: '800 CE' },
-    { label: 'Viking Discovery of America', year: 1000, mo: 1, d: 1, approx: 'c. 1000 CE' },
     { label: 'Magna Carta Signed', year: 1215, mo: 6, d: 15, approx: '1215 CE' },
-    { label: 'Genghis Khan — Death', year: 1227, mo: 8, d: 18, approx: '1227 CE' },
     { label: 'Black Death Peaks in Europe', year: 1347, mo: 10, d: 1, approx: '1347 CE' },
   ]},
   { group: 'Early Modern', events: [
     { label: 'Columbus reaches Americas', year: 1492, mo: 10, d: 12, approx: '1492 CE' },
     { label: 'Copernicus — Heliocentric Model', year: 1543, mo: 5, d: 24, approx: '1543 CE' },
-    { label: 'Galileo — Birth', year: 1564, mo: 2, d: 15, approx: '1564 CE' },
     { label: 'Isaac Newton — Birth', year: 1643, mo: 1, d: 4, approx: '1643 CE' },
-    { label: 'Napoleon — Birth', year: 1769, mo: 8, d: 15, approx: '1769 CE' },
     { label: 'American Declaration of Independence', year: 1776, mo: 7, d: 4, approx: 'July 4, 1776' },
     { label: 'French Revolution Begins', year: 1789, mo: 7, d: 14, approx: '1789 CE' },
   ]},
   { group: 'Modern Era', events: [
     { label: 'Charles Darwin — On the Origin of Species', year: 1859, mo: 11, d: 24, approx: '1859 CE' },
-    { label: 'Albert Einstein — Birth', year: 1879, mo: 3, d: 14, approx: '1879 CE' },
     { label: 'First Powered Flight — Wright Brothers', year: 1903, mo: 12, d: 17, approx: '1903 CE' },
     { label: 'World War I Begins', year: 1914, mo: 7, d: 28, approx: '1914 CE' },
-    { label: 'First Nuclear Bomb (Trinity)', year: 1945, mo: 7, d: 16, approx: '1945 CE' },
     { label: 'World War II Ends', year: 1945, mo: 9, d: 2, approx: '1945 CE' },
-    { label: 'Universal Declaration of Human Rights', year: 1948, mo: 12, d: 10, approx: '1948 CE' },
-    { label: 'Sputnik — First Satellite', year: 1957, mo: 10, d: 4, approx: '1957 CE' },
     { label: 'Apollo 11 — Moon Landing', year: 1969, mo: 7, d: 20, approx: '1969 CE' },
-    { label: 'Elon Musk — Birth', year: 1971, mo: 6, d: 28, approx: 'June 28, 1971' },
     { label: 'World Wide Web Invented', year: 1989, mo: 3, d: 12, approx: '1989 CE' },
     { label: 'SpaceX Falcon 9 — First Landing', year: 2015, mo: 12, d: 21, approx: '2015 CE' },
   ]},
@@ -867,22 +949,45 @@ function nthWeekday(year, month, weekday, n) {
 }
 
 function getHolidaysForYear(year) {
+  // Approximate equinox/solstice dates (vary ±1 day per year; these are standard calendar dates)
+  const eqSol = approxEquinoxSolstice(year);
   return [
     { label: "New Year's Day",    m: 1,  d: 1 },
+    { label: "Perihelion (Closest to Sun)", m: 1, d: 3 },
     { label: "MLK Day",           m: 1,  d: nthWeekday(year, 0, 1, 3) },
     { label: "Presidents' Day",   m: 2,  d: nthWeekday(year, 1, 1, 3) },
     { label: "St. Patrick's Day", m: 3,  d: 17 },
+    { label: "Vernal Equinox",    m: eqSol.vernalM, d: eqSol.vernalD },
     { label: "Memorial Day",      m: 5,  d: nthWeekday(year, 4, 1, -1) },
     { label: "Juneteenth",        m: 6,  d: 19 },
+    { label: "Summer Solstice",   m: eqSol.summerM, d: eqSol.summerD },
     { label: "Independence Day",  m: 7,  d: 4 },
+    { label: "Aphelion (Farthest from Sun)", m: 7, d: 4 },
     { label: "Labor Day",         m: 9,  d: nthWeekday(year, 8, 1, 1) },
+    { label: "Autumnal Equinox",  m: eqSol.autumnalM, d: eqSol.autumnalD },
     { label: "Columbus Day",      m: 10, d: nthWeekday(year, 9, 1, 2) },
     { label: "Halloween",         m: 10, d: 31 },
     { label: "Veterans Day",      m: 11, d: 11 },
     { label: "Thanksgiving",      m: 11, d: nthWeekday(year, 10, 4, 4) },
+    { label: "Winter Solstice",   m: eqSol.winterM, d: eqSol.winterD },
     { label: "Christmas",         m: 12, d: 25 },
     { label: "New Year's Eve",    m: 12, d: 31 },
   ].map(h => ({ label: h.label, days: daysFromDate(year, h.m, h.d), builtin: true }));
+}
+
+function approxEquinoxSolstice(year) {
+  // Simple approximation — accurate to ±1 day for years near present
+  const y = (year - 2000) / 1000;
+  const vernalJDE   = 2451623.80984 + 365242.37404 * y;
+  const summerJDE   = 2451716.56767 + 365241.62603 * y;
+  const autumnalJDE = 2451810.21715 + 365242.01767 * y;
+  const winterJDE   = 2451900.05952 + 365242.74049 * y;
+  function jdeToMD(jde) {
+    const d = new Date((jde - 2440587.5) * 86400000);
+    return { m: d.getUTCMonth() + 1, d: d.getUTCDate() };
+  }
+  const v = jdeToMD(vernalJDE), s = jdeToMD(summerJDE), a = jdeToMD(autumnalJDE), w = jdeToMD(winterJDE);
+  return { vernalM: v.m, vernalD: v.d, summerM: s.m, summerD: s.d, autumnalM: a.m, autumnalD: a.d, winterM: w.m, winterD: w.d };
 }
 
 function renderEventsList() {
@@ -1928,6 +2033,281 @@ new p5(function(sk) {
 
   window._checkBirthday = checkBirthday;
 })();
+
+// ─── Tutorial / Guided Tour ──────────────────────────────────────────────────
+(function() {
+  const TOUR_KEY = 'solarClockTourDone';
+
+  const STEPS = [
+    { target: '#canvas-wrap',
+      title: 'Welcome to the Solar System Clock',
+      desc: 'This is a real-time orrery — a working clock where the planets orbit in their actual astronomical positions. Each element of this clock is interactive. Let\'s take a quick tour!' },
+    { target: 'canvas-sun',
+      title: 'The Sun',
+      desc: 'At the heart of everything is our Sun. All eight planets orbit around it, just like the real solar system.' },
+    { target: 'canvas-planets',
+      title: 'The Planets',
+      desc: 'Mercury through Neptune are shown at their real orbital positions for today\'s date. Each planet is sized and colored to be recognizable at a glance.' },
+    { target: 'canvas-calendar',
+      title: 'The Calendar Ring',
+      desc: 'The outer ring maps the months of the year to Earth\'s orbit. January is at 12 o\'clock. The colored arcs represent the four seasons — winter, spring, summer, and autumn.' },
+    { target: 'canvas-clock',
+      title: 'Clock Hands',
+      desc: 'This is also a working analog clock. The hour and minute hands tell the current time, the purple hand tracks the current month, and the red second hand ticks in real time.' },
+    { target: 'canvas-digital',
+      title: 'Digital Time Display',
+      desc: 'The bottom-left corner shows a digital readout of the current time and full date — especially useful when you\'ve navigated to a different point in time.' },
+    { target: 'canvas-stars',
+      title: 'Constellation Stars',
+      desc: 'The bright stars around the edge represent real constellations visible each season. Hover over any star to see constellation details, line-art, and visibility info.' },
+    { target: '#sidebar .panel:nth-child(1)',
+      title: 'Set Any Date',
+      desc: 'Pick any date and time to see where the planets were — or will be. Step forward or backward by day, week, month, or year with the navigation arrows.' },
+    { target: '#sidebar .panel:nth-child(2)',
+      title: 'Compare Two Dates',
+      desc: 'Set a second date to overlay faded "ghost" planets. This lets you visually compare two moments in time and see which orbits align.' },
+    { target: '#sidebar .panel:nth-child(3)',
+      title: 'Save Important Dates',
+      desc: 'Bookmark any date with a custom label — birthdays, anniversaries, historic moments. Saved dates also appear as markers during simulation playback.' },
+    { target: '#eventsHeader',
+      title: 'Holidays & Celestial Events',
+      desc: 'Browse holidays, equinoxes, solstices, perihelion, and aphelion for the current year. Add your own custom events too — they\'ll show up during simulation.' },
+    { target: '#simHeader',
+      title: 'Time-Lapse Simulation',
+      desc: 'Watch the planets orbit in fast-forward! Set a date range, hit play, and see months fly by. Event cards appear around the clock as milestones pass.' },
+    { target: '#histHeader',
+      title: 'Historic Events',
+      desc: 'Journey through time — from the formation of Earth 4.5 billion years ago to the modern Space Age. Tap any event to jump directly to that date.' },
+    { target: '#accordionHeader',
+      title: 'Planetary Alignments',
+      desc: 'Scan across millions of years to find dates when the planets align similarly to your current view. Adjust per-planet tolerance for precision matching.' },
+    { target: '#tour-trigger',
+      title: 'You\'re All Set!',
+      desc: 'That\'s the tour! You can revisit this walkthrough anytime by clicking this button. Now go explore — the cosmos is yours.' },
+  ];
+
+  let currentStep = 0;
+  const $ = id => document.getElementById(id);
+  const overlay   = $('tour-overlay');
+  const highlight = $('tour-highlight');
+  const box       = $('tour-box');
+  const arrowEl   = $('tour-arrow');
+  const arrowPath = $('tour-arrow-path');
+  const titleEl   = $('tour-title');
+  const descEl    = $('tour-desc');
+  const stepLabel = $('tour-step-label');
+  const btnNext   = $('tour-next');
+  const btnBack   = $('tour-back');
+  const btnSkip   = $('tour-skip');
+  const trigger   = $('tour-trigger');
+
+  // Build progress dots
+  const dotsContainer = document.createElement('div');
+  dotsContainer.className = 'tour-progress';
+  STEPS.forEach((step, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'tour-dot';
+    dot.title = step.title;
+    dot.addEventListener('click', e => { e.stopPropagation(); showStep(i); });
+    dotsContainer.appendChild(dot);
+  });
+  // Insert dots before the buttons
+  box.insertBefore(dotsContainer, box.querySelector('.tour-btns'));
+
+  function updateDots() {
+    dotsContainer.querySelectorAll('.tour-dot').forEach((dot, i) => {
+      dot.className = 'tour-dot' + (i === currentStep ? ' active' : i < currentStep ? ' done' : '');
+    });
+  }
+
+  function getCanvasRect() {
+    const cv = document.querySelector('#canvas-wrap canvas:not(#sc-canvas)');
+    return cv ? cv.getBoundingClientRect() : null;
+  }
+
+  function getTargetRect(step) {
+    const t = step.target;
+    if (t.startsWith('canvas-')) {
+      const cr = getCanvasRect();
+      if (!cr) return null;
+      const cx = cr.left + cr.width / 2, cy = cr.top + cr.height / 2;
+      const s = cr.width / 1100;
+      switch (t) {
+        case 'canvas-sun':      return { left: cx-35*s, top: cy-35*s, width: 70*s, height: 70*s };
+        case 'canvas-planets':  return { left: cx-400*s, top: cy-400*s, width: 800*s, height: 800*s };
+        case 'canvas-calendar': return { left: cx-520*s, top: cy-520*s, width: 1040*s, height: 1040*s };
+        case 'canvas-clock':    return { left: cx-200*s, top: cy-200*s, width: 400*s, height: 400*s };
+        case 'canvas-digital':  return { left: cr.left+8*s, top: cr.bottom-85*s, width: 200*s, height: 75*s };
+        case 'canvas-stars':    return { left: cx-540*s, top: cy-540*s, width: 1080*s, height: 1080*s };
+        default: return cr;
+      }
+    }
+    const el = document.querySelector(t);
+    if (!el) return null;
+    const sidebar = $('sidebar');
+    if (sidebar && sidebar.classList.contains('collapsed')) {
+      $('sidebarToggle').click();
+    }
+    el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    return el.getBoundingClientRect();
+  }
+
+  function drawArrow(hlRect, bx, by, bw) {
+    // Find best edge point on highlight facing the box
+    const hlCx = hlRect.left + hlRect.width / 2;
+    const hlCy = hlRect.top + hlRect.height / 2;
+    const boxCx = bx + bw / 2;
+    const boxCy = by;
+
+    // Start from the nearest edge of the highlight
+    let sx, sy;
+    const angle = Math.atan2(boxCy - hlCy, boxCx - hlCx);
+    sx = hlCx + Math.cos(angle) * Math.min(hlRect.width / 2, hlRect.height / 2);
+    sy = hlCy + Math.sin(angle) * Math.min(hlRect.width / 2, hlRect.height / 2);
+
+    // Clamp start to highlight edges
+    sx = Math.max(hlRect.left, Math.min(sx, hlRect.left + hlRect.width));
+    sy = Math.max(hlRect.top, Math.min(sy, hlRect.top + hlRect.height));
+
+    // End at top-center of box
+    const ex = boxCx, ey = boxCy;
+
+    // If distance is too small, hide arrow
+    const dist = Math.hypot(ex - sx, ey - sy);
+    if (dist < 40) { arrowEl.style.display = 'none'; return; }
+
+    // Control point for bezier curve
+    const mx = (sx + ex) / 2, my = (sy + ey) / 2;
+    const perp = Math.atan2(ey - sy, ex - sx) + Math.PI / 2;
+    const cpx = mx + Math.cos(perp) * dist * 0.2;
+    const cpy = my + Math.sin(perp) * dist * 0.2;
+
+    const allX = [sx, ex, cpx], allY = [sy, ey, cpy];
+    const minX = Math.min(...allX) - 15;
+    const minY = Math.min(...allY) - 15;
+    const maxX = Math.max(...allX) + 15;
+    const maxY = Math.max(...allY) + 15;
+
+    arrowEl.style.left = minX + 'px';
+    arrowEl.style.top  = minY + 'px';
+    const svg = arrowEl.querySelector('svg');
+    svg.setAttribute('width', maxX - minX);
+    svg.setAttribute('height', maxY - minY);
+    arrowPath.setAttribute('d',
+      `M${sx-minX},${sy-minY} Q${cpx-minX},${cpy-minY} ${ex-minX},${ey-minY}`);
+    arrowEl.style.display = 'block';
+  }
+
+  function showStep(idx) {
+    currentStep = idx;
+    const step = STEPS[idx];
+    titleEl.textContent = step.title;
+    descEl.textContent  = step.desc;
+    stepLabel.textContent = `${idx + 1} / ${STEPS.length}`;
+    btnBack.style.display = idx === 0 ? 'none' : '';
+    btnNext.textContent = idx === STEPS.length - 1 ? 'Done' : 'Next \u2192';
+    updateDots();
+
+    // Small delay to let scroll/layout settle
+    requestAnimationFrame(() => {
+      const rect = getTargetRect(step);
+      if (!rect) {
+        highlight.style.display = 'none';
+        arrowEl.style.display = 'none';
+        box.style.left = '50%'; box.style.top = '50%';
+        box.style.transform = 'translate(-50%,-50%)';
+        box.style.display = 'block';
+        return;
+      }
+
+      // Position highlight
+      const pad = 8;
+      highlight.style.left   = (rect.left - pad) + 'px';
+      highlight.style.top    = (rect.top  - pad) + 'px';
+      highlight.style.width  = (rect.width  + pad * 2) + 'px';
+      highlight.style.height = (rect.height + pad * 2) + 'px';
+      highlight.style.display = 'block';
+
+      // Position box intelligently
+      box.style.transform = 'none';
+      const bw = 320;
+      const boxEl = box;
+      boxEl.style.display = 'block';
+      boxEl.style.left = '0px'; boxEl.style.top = '0px';
+      const bh = boxEl.offsetHeight || 220;
+
+      let bx, by;
+      // Try right
+      if (rect.left + rect.width + bw + 24 < window.innerWidth) {
+        bx = rect.left + rect.width + 18;
+        by = Math.max(10, rect.top + rect.height / 2 - bh / 2);
+      }
+      // Try left
+      else if (rect.left - bw - 24 > 0) {
+        bx = rect.left - bw - 18;
+        by = Math.max(10, rect.top + rect.height / 2 - bh / 2);
+      }
+      // Try below
+      else if (rect.top + rect.height + bh + 24 < window.innerHeight) {
+        bx = Math.max(10, rect.left + rect.width / 2 - bw / 2);
+        by = rect.top + rect.height + 18;
+      }
+      // Above
+      else {
+        bx = Math.max(10, rect.left + rect.width / 2 - bw / 2);
+        by = Math.max(10, rect.top - bh - 18);
+      }
+      bx = Math.max(10, Math.min(bx, window.innerWidth - bw - 10));
+      by = Math.max(10, Math.min(by, window.innerHeight - bh - 10));
+      box.style.left = bx + 'px';
+      box.style.top  = by + 'px';
+
+      drawArrow(rect, bx, by, bw);
+    });
+  }
+
+  function startTour() {
+    overlay.classList.add('active');
+    showStep(0);
+  }
+
+  function endTour() {
+    overlay.classList.remove('active');
+    highlight.style.display = 'none';
+    box.style.display = 'none';
+    arrowEl.style.display = 'none';
+    localStorage.setItem(TOUR_KEY, '1');
+  }
+
+  btnNext.addEventListener('click', e => {
+    e.stopPropagation();
+    if (currentStep >= STEPS.length - 1) { endTour(); return; }
+    showStep(currentStep + 1);
+  });
+  btnBack.addEventListener('click', e => {
+    e.stopPropagation();
+    if (currentStep > 0) showStep(currentStep - 1);
+  });
+  btnSkip.addEventListener('click', e => { e.stopPropagation(); endTour(); });
+  // overlay is non-blocking — user can interact with page while tour is open
+  trigger.addEventListener('click', e => { e.stopPropagation(); startTour(); });
+
+  // Keyboard navigation
+  document.addEventListener('keydown', e => {
+    if (!overlay.classList.contains('active')) return;
+    if (e.key === 'Escape') endTour();
+    if (e.key === 'ArrowRight' || e.key === 'Enter') {
+      if (currentStep < STEPS.length - 1) showStep(currentStep + 1);
+      else endTour();
+    }
+    if (e.key === 'ArrowLeft' && currentStep > 0) showStep(currentStep - 1);
+  });
+
+  // Auto-start on first visit
+  if (!localStorage.getItem(TOUR_KEY)) {
+    setTimeout(startTour, 1500);
+  }
+})();
 </script>
 
 <div id="casey-overlay">
@@ -1936,5 +2316,6 @@ new p5(function(sk) {
   <div id="casey-sub">He would be <span id="casey-age"></span> years old on this day!</div>
   <div id="casey-dismiss">click anywhere to dismiss</div>
 </div>
+
 </body>
 </html>
