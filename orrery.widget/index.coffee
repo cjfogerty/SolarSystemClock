@@ -4,7 +4,7 @@
 command: "echo ''"
 refreshFrequency: 60000
 
-widgetUrl = 'https://cjfogerty.github.io/SolarSystemClock/'
+widgetUrl = 'https://cjfogerty.github.io/SolarSystemClock/?embedded=1'
 
 style: """
   left: 20px
