@@ -2601,9 +2601,11 @@ new p5(function(sk) {
 })();
 
 // ─── Tutorial / Guided Tour ──────────────────────────────────────────────────
+// ─── Tutorial / Guided Tour ──────────────────────────────────────────────────
 (function() {
   const TOUR_KEY = 'solarClockTourDone';
-    // Detect embedded/widget mode
+
+  // Detect embedded/widget mode
   const params = new URLSearchParams(window.location.search);
   const isEmbedded =
     window.self !== window.top ||      // inside an iframe
@@ -2727,41 +2729,28 @@ new p5(function(sk) {
   }
 
   function drawArrow(hlRect, bx, by, bw) {
-    // Find best edge point on highlight facing the box
     const hlCx = hlRect.left + hlRect.width / 2;
     const hlCy = hlRect.top + hlRect.height / 2;
     const boxCx = bx + bw / 2;
     const boxCy = by;
-
-    // Start from the nearest edge of the highlight
     let sx, sy;
     const angle = Math.atan2(boxCy - hlCy, boxCx - hlCx);
     sx = hlCx + Math.cos(angle) * Math.min(hlRect.width / 2, hlRect.height / 2);
     sy = hlCy + Math.sin(angle) * Math.min(hlRect.width / 2, hlRect.height / 2);
-
-    // Clamp start to highlight edges
     sx = Math.max(hlRect.left, Math.min(sx, hlRect.left + hlRect.width));
     sy = Math.max(hlRect.top, Math.min(sy, hlRect.top + hlRect.height));
-
-    // End at top-center of box
     const ex = boxCx, ey = boxCy;
-
-    // If distance is too small, hide arrow
     const dist = Math.hypot(ex - sx, ey - sy);
     if (dist < 40) { arrowEl.style.display = 'none'; return; }
-
-    // Control point for bezier curve
     const mx = (sx + ex) / 2, my = (sy + ey) / 2;
     const perp = Math.atan2(ey - sy, ex - sx) + Math.PI / 2;
     const cpx = mx + Math.cos(perp) * dist * 0.2;
     const cpy = my + Math.sin(perp) * dist * 0.2;
-
     const allX = [sx, ex, cpx], allY = [sy, ey, cpy];
     const minX = Math.min(...allX) - 15;
     const minY = Math.min(...allY) - 15;
     const maxX = Math.max(...allX) + 15;
     const maxY = Math.max(...allY) + 15;
-
     arrowEl.style.left = minX + 'px';
     arrowEl.style.top  = minY + 'px';
     const svg = arrowEl.querySelector('svg');
@@ -2782,11 +2771,9 @@ new p5(function(sk) {
     btnNext.textContent = idx === STEPS.length - 1 ? 'Done' : 'Next \u2192';
     updateDots();
 
-    // Set inline highlight mode for p5 draw functions
     const inlineMap = { 'canvas-planets': 'planets', 'canvas-calendar': 'calendar', 'canvas-clock': 'clock', 'canvas-stars': 'stars' };
     window._tourHighlight = step.inline ? (inlineMap[step.target] || null) : null;
 
-    // On mobile: close sheet for clock steps, open for sidebar steps
     if (window.innerWidth <= 700 && typeof window._sheetOpen === 'function') {
       const isCanvasStep = step.target.startsWith('canvas-') || step.target === '#canvas-wrap' || step.target === '#tour-trigger';
       if (isCanvasStep && window._sheetIsOpen()) {
@@ -2796,7 +2783,6 @@ new p5(function(sk) {
       }
     }
 
-    // Delay to let sheet animation and scroll settle
     setTimeout(() => {
       const rect = getTargetRect(step);
       if (!rect) {
@@ -2808,7 +2794,6 @@ new p5(function(sk) {
         return;
       }
 
-      // For inline-highlighted steps, hide the box-shadow overlay
       if (step.inline) {
         highlight.style.display = 'none';
       } else {
@@ -2820,7 +2805,6 @@ new p5(function(sk) {
         highlight.style.display = 'block';
       }
 
-      // Position box intelligently
       box.style.transform = 'none';
       let bw = 320;
       const boxEl = box;
@@ -2828,8 +2812,8 @@ new p5(function(sk) {
       boxEl.style.left = '0px'; boxEl.style.top = '0px';
       const bh = boxEl.offsetHeight || 220;
       const mobileView = window.innerWidth <= 700;
-
       let bx, by;
+
       if (mobileView) {
         const safeBottom = window.innerHeight - 52 - 10;
         bw = Math.min(window.innerWidth - 24, 360);
@@ -2898,10 +2882,8 @@ new p5(function(sk) {
     if (currentStep > 0) showStep(currentStep - 1);
   });
   btnSkip.addEventListener('click', e => { e.stopPropagation(); endTour(); });
-  // overlay is non-blocking — user can interact with page while tour is open
   trigger.addEventListener('click', e => { e.stopPropagation(); startTour(); });
 
-  // Keyboard navigation
   document.addEventListener('keydown', e => {
     if (!overlay.classList.contains('active')) return;
     if (e.key === 'Escape') endTour();
@@ -2911,6 +2893,12 @@ new p5(function(sk) {
     }
     if (e.key === 'ArrowLeft' && currentStep > 0) showStep(currentStep - 1);
   });
+
+  // Auto-start on first visit (but not when embedded as a widget)
+  if (!isEmbedded && !localStorage.getItem(TOUR_KEY)) {
+    setTimeout(startTour, 1500);
+  }
+})();
 
   // Auto-start on first visit (but not when embedded as a widget)
   if (!isEmbedded && !localStorage.getItem(TOUR_KEY)) {
