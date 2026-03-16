@@ -2021,7 +2021,7 @@ new p5(function(sk) {
 
   function drawCalendarOverlay(sk, primaryDays, rotOff, monthAngles) {
     const tickInner = 460, tickOuter = 480, labelR = 502;
-    const calHL = window._tourHighlight === 'calendar';
+    const calHL = window._tourHighlight === 'calendar' || !!window._calHovered;
 
     // Per-month tinted arcs on the calendar ring
     for (let mi = 0; mi < 12; mi++) {
@@ -2041,6 +2041,30 @@ new p5(function(sk) {
       sk.line(0, 0, Math.cos(a)*(tickInner - 10), Math.sin(a)*(tickInner - 10));
       sk.strokeWeight(1);
     });
+
+    // Day ticks — shown when hovered or during tour highlight
+    if (calHL) {
+      sk.push();
+      const calYear = new Date(J2000().getTime() + primaryDays * 86400000).getFullYear();
+      const isLeap = (calYear % 4 === 0 && (calYear % 100 !== 0 || calYear % 400 === 0));
+      const dpm = [31, isLeap ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+      const jan1Days = daysFromDate(calYear, 1, 1);
+      let doy = 0;
+      for (let mo = 0; mo < 12; mo++) {
+        for (let d = 1; d <= dpm[mo]; d++, doy++) {
+          const a = drawAngle(jan1Days + doy, PLANETS[2], rotOff);
+          const cx2 = Math.cos(a), cy2 = Math.sin(a);
+          const every5 = (doy % 5 === 0);
+          sk.stroke(200, 215, 255, every5 ? 85 : 40);
+          sk.strokeWeight(every5 ? 0.85 : 0.5);
+          const t0 = tickInner + 2;
+          const t1 = tickOuter - (every5 ? 6 : 8);
+          sk.line(cx2 * t0, cy2 * t0, cx2 * t1, cy2 * t1);
+        }
+      }
+      sk.strokeWeight(1);
+      sk.pop();
+    }
 
     for (let mi = 0; mi < 12; mi++) {
       const a = monthAngles[mi];
@@ -2356,11 +2380,13 @@ new p5(function(sk) {
     calTip.style.left = cx + 'px';
     calTip.style.top = cy + 'px';
     calTip.classList.add('visible');
+    window._calHovered = true;
   }
 
   function hideCalTooltip() {
     calTip.classList.remove('visible');
     _hoveredCalDate = null;
+    window._calHovered = false;
   }
 
   document.addEventListener('mousemove', e => {
@@ -2591,12 +2617,12 @@ new p5(function(sk) {
     { target: 'canvas-clock', inline: true,
       title: 'Clock Hands',
       desc: 'This is also a working analog clock. The hour and minute hands tell the current time, the purple hand tracks the current month, and the red second hand ticks in real time.' },
-    { target: 'canvas-digital',
-      title: 'Digital Time Display',
-      desc: 'The bottom-left corner shows a digital readout of the current time and full date — especially useful when you\'ve navigated to a different point in time.' },
     { target: 'canvas-stars', inline: true,
       title: 'Constellation Stars',
       desc: 'The bright stars around the edge represent real constellations visible each season. Hover over any star to see constellation details, line-art, and visibility info.' },
+    { target: 'canvas-digital',
+      title: 'Digital Time Display',
+      desc: 'The bottom-left corner shows a digital readout of the current time and full date — especially useful when you\'ve navigated to a different point in time.' },
     { target: '#sidebar .panel:nth-child(1)',
       title: 'Set Any Date',
       desc: 'Pick any date and time to see where the planets were — or will be. Step forward or backward by day, week, month, or year with the navigation arrows.' },
