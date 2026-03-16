@@ -180,6 +180,11 @@
       .panel h3 { margin-bottom: 6px; }
       input[type="range"] { height: 28px; width: 100%; }
 
+      /* Sim month cards: keep within viewport on mobile */
+      #sim-card-ring { overflow: hidden; }
+      .sim-month-card { font-size: 8px; min-width: 56px; max-width: 90px; padding: 3px 5px; }
+      .smc-head { font-size: 8px; }
+
       /* Tour: mobile layout */
       #tour-box { width: calc(100vw - 24px); max-width: 360px; }
       #tour-arrow { display: none !important; }
@@ -1210,13 +1215,23 @@ document.getElementById('addEventBtn').addEventListener('click', () => {
     const wr = wrap.getBoundingClientRect();
     const cx = cr.left - wr.left + cr.width / 2;
     const cy = cr.top  - wr.top  + cr.height / 2;
-    const R  = 520 * sf;
+    const mobile = window.innerWidth <= 700;
+    const R  = mobile ? Math.min(520 * sf, cr.width / 2 - 10) : 520 * sf;
+    const wrapW = wr.width, wrapH = wr.height;
     for (let mi = 0; mi < 12; mi++) {
       const card = cardEls[mi]; if (!card) continue;
       const nextA = mi < 11 ? angles[mi + 1] : angles[0] + Math.PI * 2;
       const midA  = (angles[mi] + nextA) / 2;
-      card.style.left = (cx + Math.cos(midA) * R) + 'px';
-      card.style.top  = (cy + Math.sin(midA) * R) + 'px';
+      let lx = cx + Math.cos(midA) * R;
+      let ly = cy + Math.sin(midA) * R;
+      // On mobile, clamp cards within the canvas-wrap bounds
+      if (mobile) {
+        const cw = card.offsetWidth || 80, ch = card.offsetHeight || 30;
+        lx = Math.max(cw / 2 + 4, Math.min(lx, wrapW - cw / 2 - 4));
+        ly = Math.max(ch / 2 + 4, Math.min(ly, wrapH - ch / 2 - 4));
+      }
+      card.style.left = lx + 'px';
+      card.style.top  = ly + 'px';
     }
   }
 
