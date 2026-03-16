@@ -259,6 +259,33 @@
     }
     #histSearch::placeholder { color: #334; }
 
+    /* ── Planet hover card ─────────────────────────────────────── */
+    #planet-card {
+      display: none; position: absolute; z-index: 200; pointer-events: none;
+      width: 210px;
+      background: linear-gradient(160deg, #0c0c1a 0%, #07070f 100%);
+      border: 1px solid #2a2a50; border-radius: 10px;
+      box-shadow: 0 6px 28px rgba(0,0,0,0.75);
+      font-family: Arial, sans-serif; padding: 10px 12px;
+    }
+    #planet-card.visible { display: block; }
+    .pc-header { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .pc-dot { width: 14px; height: 14px; border-radius: 50%; flex-shrink: 0; }
+    .pc-name { font-size: 14px; font-weight: bold; color: #dde; font-family: Georgia, serif; }
+    .pc-desc { font-size: 11px; color: #8899aa; line-height: 1.5; margin-bottom: 8px; }
+    .pc-stats { border-top: 1px solid #181830; padding-top: 6px; }
+    .pc-stat { font-size: 10px; color: #5566aa; margin-bottom: 2px; }
+    .pc-stat span { color: #8899cc; }
+
+    /* ── Calendar date tooltip ────────────────────────────────── */
+    #cal-tooltip {
+      display: none; position: absolute; z-index: 150; pointer-events: none;
+      background: rgba(4,5,16,0.9); border: 1px solid #2a2a50; border-radius: 6px;
+      padding: 4px 8px; font-size: 11px; color: #aabcff; font-family: Arial, sans-serif;
+      white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,0.6);
+    }
+    #cal-tooltip.visible { display: block; }
+
     /* ── Bright-star hover card ───────────────────────────────── */
     #star-card {
       display: none; position: absolute; z-index: 200; pointer-events: none;
@@ -623,6 +650,12 @@
 </div>
 
 <div id="canvas-wrap">
+  <div id="planet-card">
+    <div class="pc-header"><div class="pc-dot" id="pc-dot"></div><div class="pc-name" id="pc-name"></div></div>
+    <div class="pc-desc" id="pc-desc"></div>
+    <div class="pc-stats" id="pc-stats"></div>
+  </div>
+  <div id="cal-tooltip"></div>
   <div id="star-card">
     <canvas id="sc-canvas" width="196" height="76"></canvas>
     <div class="sc-body">
@@ -1582,6 +1615,12 @@ new p5(function(sk) {
     drawMonthWedges(sk, monthAngles);
     drawCalendarOverlay(sk, primaryDays, rotOff, monthAngles);
     drawAnalogClock(sk, primaryDays, rotOff, monthAngles);
+    // Dim everything except constellation stars during that tour step
+    if (window._tourHighlight === 'stars') {
+      sk.push(); sk.resetMatrix(); sk.fill(2, 2, 8, 160); sk.noStroke();
+      sk.rect(0, 0, canvasSize, canvasSize); sk.pop();
+      sk.translate(CX * scaleFactor, CY * scaleFactor); sk.scale(scaleFactor);
+    }
     drawBrightStars(sk);
     drawSimHighlights(sk, primaryDays, monthAngles);
     drawSun(sk);
@@ -1722,6 +1761,7 @@ new p5(function(sk) {
   }
 
   const primaryPos = {};
+  window._primaryPos = primaryPos;
   function drawPlanets(sk, days, primaryDays, rotOff, isCompare) {
     PLANETS.forEach((p, i) => {
       const a = drawAngle(days, p, rotOff);
@@ -2180,6 +2220,175 @@ new p5(function(sk) {
     }
   }, { passive: false });
 })();
+
+// ─── Planet & Sun Hover Cards + Calendar Date Hover ──────────────────────────
+(function() {
+  const PLANET_INFO = {
+    Sun: { desc: 'The star at the center of our solar system. It contains 99.86% of the system\'s total mass.', stats: ['Type: G2V yellow dwarf', 'Diameter: 1.39 million km', 'Surface temp: 5,500\u00b0C', 'Age: 4.6 billion years'] },
+    Mercury: { desc: 'The smallest planet and closest to the Sun. Its surface is covered in craters and has virtually no atmosphere.', stats: ['Orbit: 88 days', 'Day: 59 Earth days', 'Diameter: 4,879 km', 'Dist. from Sun: 58M km'] },
+    Venus: { desc: 'Earth\'s "sister planet" with a thick toxic atmosphere. It\'s the hottest planet due to a runaway greenhouse effect.', stats: ['Orbit: 225 days', 'Day: 243 Earth days', 'Diameter: 12,104 km', 'Surface temp: 465\u00b0C'] },
+    Earth: { desc: 'Our home — the only known planet with liquid water on its surface and the only confirmed harbor of life.', stats: ['Orbit: 365.25 days', 'Day: 24 hours', 'Diameter: 12,742 km', '1 moon'] },
+    Mars: { desc: 'The Red Planet, home to Olympus Mons — the tallest volcano in the solar system at 21.9 km high.', stats: ['Orbit: 687 days', 'Day: 24h 37m', 'Diameter: 6,779 km', '2 moons'] },
+    Jupiter: { desc: 'The largest planet, a gas giant with a storm (the Great Red Spot) that has raged for at least 350 years.', stats: ['Orbit: 11.86 years', 'Day: 9h 56m', 'Diameter: 139,820 km', '95 known moons'] },
+    Saturn: { desc: 'Famous for its spectacular ring system made of ice and rock. It\'s the least dense planet — it would float in water.', stats: ['Orbit: 29.5 years', 'Day: 10h 42m', 'Diameter: 116,460 km', '146 known moons'] },
+    Uranus: { desc: 'An ice giant that rotates on its side, likely knocked over by a collision billions of years ago.', stats: ['Orbit: 84 years', 'Day: 17h 14m', 'Diameter: 50,724 km', '28 known moons'] },
+    Neptune: { desc: 'The windiest planet with gusts reaching 2,100 km/h. It\'s the farthest known planet from the Sun.', stats: ['Orbit: 165 years', 'Day: 16h 6m', 'Diameter: 49,244 km', '16 known moons'] },
+  };
+
+  const card = document.getElementById('planet-card');
+  const pcName = document.getElementById('pc-name');
+  const pcDot = document.getElementById('pc-dot');
+  const pcDesc = document.getElementById('pc-desc');
+  const pcStats = document.getElementById('pc-stats');
+  const calTip = document.getElementById('cal-tooltip');
+
+  function getCanvas() { return document.querySelector('#canvas-wrap canvas:not(#sc-canvas)'); }
+  function toDrawing(clientX, clientY) {
+    const cv = getCanvas(); if (!cv) return null;
+    const rect = cv.getBoundingClientRect();
+    const dpr = window.devicePixelRatio || 1;
+    const px = (clientX - rect.left) * (cv.width / (rect.width * dpr));
+    const py = (clientY - rect.top) * (cv.height / (rect.height * dpr));
+    const sf = cv.width / (1100 * dpr);
+    return { x: px / sf - 550, y: py / sf - 550 };
+  }
+
+  let _hoveredPlanet = null;
+  let _hoveredCalDate = null;
+
+  function planetHitTest(dx, dy) {
+    // Check sun first
+    if (Math.hypot(dx, dy) < 30) return { name: 'Sun', color: [255, 200, 30] };
+    // Check planets using primaryPos (set during drawPlanets)
+    for (const p of PLANETS) {
+      const pos = window._primaryPos && window._primaryPos[p.name];
+      if (pos && Math.hypot(dx - pos.x, dy - pos.y) < p.size + 8) return p;
+    }
+    return null;
+  }
+
+  function calendarHitTest(dx, dy) {
+    const dist = Math.hypot(dx, dy);
+    if (dist < 445 || dist > 530) return null; // only in the calendar ring zone
+    const angle = Math.atan2(dy, dx);
+    return angle;
+  }
+
+  function showPlanetCard(planet, clientX, clientY) {
+    const info = PLANET_INFO[planet.name];
+    if (!info) return;
+    pcName.textContent = planet.name;
+    pcDot.style.background = `rgb(${planet.color.join(',')})`;
+    pcDesc.textContent = info.desc;
+    pcStats.innerHTML = info.stats.map(s => {
+      const parts = s.split(': ');
+      return `<div class="pc-stat">${parts[0]}: <span>${parts[1]}</span></div>`;
+    }).join('');
+
+    const wrap = document.getElementById('canvas-wrap');
+    const wr = wrap.getBoundingClientRect();
+    let cx = clientX - wr.left + 16;
+    let cy = clientY - wr.top - 20;
+    if (cx + 220 > wr.width) cx = clientX - wr.left - 226;
+    if (cy + 200 > wr.height) cy = clientY - wr.top - 200;
+    if (cy < 0) cy = 4;
+    card.style.left = cx + 'px';
+    card.style.top = cy + 'px';
+    card.classList.add('visible');
+  }
+
+  function hidePlanetCard() {
+    card.classList.remove('visible');
+    _hoveredPlanet = null;
+  }
+
+  function showCalTooltip(angle, clientX, clientY) {
+    // Convert angle back to a date using current rotOff + Earth orbit
+    const primaryDays = getPrimaryDays();
+    const rotOff = getCanvasRotationOffset(primaryDays);
+    const earthL0rad = (EPOCH_LONG['Earth'] || 0) * Math.PI / 180;
+    // Reverse drawAngle: angle = L0rad + (2PI * days) / period + rotOffset
+    // days = (angle - L0rad - rotOffset) * period / (2PI)
+    const period = PLANETS[2].period;
+    let days = (angle - earthL0rad - rotOff) * period / (Math.PI * 2);
+    // Normalize to the current year
+    const calYear = new Date(J2000().getTime() + primaryDays * 86400000).getFullYear();
+    const jan1 = daysFromDate(calYear, 1, 1);
+    const dec31 = daysFromDate(calYear, 12, 31);
+    const yearSpan = dec31 - jan1;
+    days = jan1 + ((days - jan1) % yearSpan + yearSpan) % yearSpan;
+    if (days < jan1) days += yearSpan;
+    if (days > dec31) days -= yearSpan;
+
+    const d = new Date(J2000().getTime() + days * 86400000);
+    const MONTHS_S = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    const label = MONTHS_S[d.getMonth()] + ' ' + d.getDate();
+
+    calTip.textContent = label;
+    const wrap = document.getElementById('canvas-wrap');
+    const wr = wrap.getBoundingClientRect();
+    let cx = clientX - wr.left + 12;
+    let cy = clientY - wr.top - 28;
+    if (cx + 60 > wr.width) cx = clientX - wr.left - 60;
+    if (cy < 0) cy = 4;
+    calTip.style.left = cx + 'px';
+    calTip.style.top = cy + 'px';
+    calTip.classList.add('visible');
+  }
+
+  function hideCalTooltip() {
+    calTip.classList.remove('visible');
+    _hoveredCalDate = null;
+  }
+
+  document.addEventListener('mousemove', e => {
+    const cv = getCanvas(); if (!cv) return;
+    const rect = cv.getBoundingClientRect();
+    if (e.clientX < rect.left || e.clientX > rect.right ||
+        e.clientY < rect.top || e.clientY > rect.bottom) {
+      hidePlanetCard();
+      hideCalTooltip();
+      return;
+    }
+    const dp = toDrawing(e.clientX, e.clientY); if (!dp) return;
+
+    // Planet hover
+    const planet = planetHitTest(dp.x, dp.y);
+    if (planet && (!_hoveredPlanet || _hoveredPlanet.name !== planet.name)) {
+      _hoveredPlanet = planet;
+      showPlanetCard(planet, e.clientX, e.clientY);
+    } else if (!planet && _hoveredPlanet) {
+      hidePlanetCard();
+    }
+
+    // Calendar date hover
+    const calAngle = calendarHitTest(dp.x, dp.y);
+    if (calAngle !== null && !_hoveredPlanet) {
+      showCalTooltip(calAngle, e.clientX, e.clientY);
+      _hoveredCalDate = calAngle;
+    } else if (calAngle === null || _hoveredPlanet) {
+      hideCalTooltip();
+    }
+  });
+
+  // Touch support for planets
+  document.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    const t = e.touches[0];
+    const dp = toDrawing(t.clientX, t.clientY); if (!dp) return;
+    const planet = planetHitTest(dp.x, dp.y);
+    if (planet) {
+      e.preventDefault();
+      _hoveredPlanet = planet;
+      showPlanetCard(planet, t.clientX, t.clientY);
+    } else if (_hoveredPlanet) {
+      hidePlanetCard();
+    }
+  }, { passive: false });
+})();
+
+// Expose primaryPos for planet hover hit testing
+window._primaryPos = null;
 
 // ── Casey's Birthday Easter Egg ───────────────────────────────────────────────
 (function() {
