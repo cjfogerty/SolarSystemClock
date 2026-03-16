@@ -620,14 +620,14 @@
 
 <script>
 const PLANETS = [
-  { name: "Mercury", radius: 62,  period: 88,       color: [180,175,170], size: 8,  glowColor: [210,205,200] },
-  { name: "Venus",   radius: 104, period: 224.7,    color: [255,210,120], size: 13, glowColor: [255,235,165] },
-  { name: "Earth",   radius: 150, period: 365.25,   color: [ 70,140,255], size: 13, glowColor: [110,190,255] },
-  { name: "Mars",    radius: 196, period: 687,       color: [220, 80, 50], size: 11, glowColor: [255,125, 85] },
-  { name: "Jupiter", radius: 248, period: 4332.59,  color: [230,190,120], size: 22, glowColor: [255,215,155] },
-  { name: "Saturn",  radius: 300, period: 10759.22, color: [210,185,140], size: 19, glowColor: [235,210,165] },
-  { name: "Uranus",  radius: 346, period: 30688.5,  color: [100,230,220], size: 15, glowColor: [145,255,248] },
-  { name: "Neptune", radius: 388, period: 60190,    color: [ 80,100,230], size: 15, glowColor: [105,135,255] }
+  { name: "Mercury", radius: 62,  period: 88,       color: [180,175,170], size: 11, glowColor: [210,205,200] },
+  { name: "Venus",   radius: 104, period: 224.7,    color: [255,210,120], size: 18, glowColor: [255,235,165] },
+  { name: "Earth",   radius: 150, period: 365.25,   color: [ 70,140,255], size: 18, glowColor: [110,190,255] },
+  { name: "Mars",    radius: 196, period: 687,       color: [220, 80, 50], size: 15, glowColor: [255,125, 85] },
+  { name: "Jupiter", radius: 248, period: 4332.59,  color: [230,190,120], size: 30, glowColor: [255,215,155] },
+  { name: "Saturn",  radius: 300, period: 10759.22, color: [210,185,140], size: 26, glowColor: [235,210,165] },
+  { name: "Uranus",  radius: 346, period: 30688.5,  color: [100,230,220], size: 21, glowColor: [145,255,248] },
+  { name: "Neptune", radius: 388, period: 60190,    color: [ 80,100,230], size: 21, glowColor: [105,135,255] }
 ];
 
 const ORBIT_COLORS = [
@@ -1662,17 +1662,25 @@ new p5(function(sk) {
 
   function drawPlanetOrb(sk, x, y, p, alpha) {
     const s = p.size; const [r,g,b] = p.color; const [gr,gg,gb] = p.glowColor;
-    for (let i = 4; i >= 1; i--) { sk.noStroke(); sk.fill(gr, gg, gb, (alpha * 0.18) / i); sk.ellipse(x, y, (s + i*5)*2, (s + i*5)*2); }
-    for (let i = s; i >= 1; i--) {
-      const t = 1 - i/s; const hl = Math.max(0, 1 - t*1.4);
-      sk.fill(Math.min(255, r + hl*80), Math.min(255, g + hl*80), Math.min(255, b + hl*80), alpha);
-      sk.ellipse(x + (1-t)*s*0.2, y + (1-t)*s*0.1, i*2, i*2);
+    // Tight, subtle glow — 2 layers close to the body
+    for (let i = 2; i >= 1; i--) { sk.noStroke(); sk.fill(gr, gg, gb, (alpha * 0.10) / i); sk.ellipse(x, y, (s + i*3)*2, (s + i*3)*2); }
+    // Crisp planet body — fewer gradient steps, sharper edge
+    const steps = Math.max(6, Math.floor(s * 0.6));
+    for (let i = steps; i >= 1; i--) {
+      const t = 1 - i/steps; const hl = Math.max(0, 1 - t*1.6);
+      sk.fill(Math.min(255, r + hl*90), Math.min(255, g + hl*90), Math.min(255, b + hl*90), alpha);
+      sk.noStroke();
+      sk.ellipse(x + (1-t)*s*0.12, y + (1-t)*s*0.06, (i/steps)*s*2, (i/steps)*s*2);
     }
-    sk.fill(255, 255, 255, alpha * 0.55); sk.ellipse(x - s*0.28, y - s*0.28, s*0.38, s*0.38);
+    // Specular highlight
+    sk.fill(255, 255, 255, alpha * 0.6); sk.ellipse(x - s*0.24, y - s*0.24, s*0.35, s*0.35);
+    // Hard edge ring for crispness
+    sk.noFill(); sk.stroke(r, g, b, alpha * 0.3); sk.strokeWeight(0.8);
+    sk.ellipse(x, y, s*2, s*2); sk.strokeWeight(1);
     if (p.name === 'Saturn') {
       sk.noFill();
-      sk.stroke(210, 185, 140, alpha * 0.6); sk.strokeWeight(1.5); sk.ellipse(x, y, s*3.2, s*0.7);
-      sk.stroke(190, 165, 120, alpha * 0.35); sk.strokeWeight(1); sk.ellipse(x, y, s*3.8, s*0.85);
+      sk.stroke(210, 185, 140, alpha * 0.65); sk.strokeWeight(2); sk.ellipse(x, y, s*3.0, s*0.65);
+      sk.stroke(190, 165, 120, alpha * 0.35); sk.strokeWeight(1.2); sk.ellipse(x, y, s*3.6, s*0.8);
       sk.strokeWeight(1);
     }
   }
