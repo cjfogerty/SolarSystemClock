@@ -115,13 +115,60 @@
     body { padding-left: 22px; } /* room for toggle tab */
 
     @media (max-width: 700px) {
-      body { flex-direction: column; align-items: stretch; padding: 6px; gap: 6px; }
-      #sidebar { width: 100%; }
-      #sidebar.collapsed { width: 100%; height: 0; margin: 0; opacity: 0; }
-      #canvas-wrap { align-items: center; }
-      canvas { max-height: 60vh; }
-      button, input { min-height: 36px; font-size: 16px; }
+      body { flex-direction: column; align-items: stretch; padding: 0; gap: 0; padding-left: 0; }
       #sidebarToggle { display: none; }
+
+      /* Canvas: fill viewport above sheet peek */
+      #canvas-wrap { align-items: center; justify-content: flex-start; padding-top: 4px; height: calc(100dvh - 52px); min-height: calc(100dvh - 52px); }
+      canvas { max-width: 100vw; max-height: calc(100dvh - 60px); width: auto; height: auto; }
+
+      /* Sidebar becomes bottom sheet */
+      #sidebar {
+        position: fixed; bottom: 0; left: 0; right: 0; width: 100%; max-height: 82vh; z-index: 400;
+        overflow-y: auto; overflow-x: hidden; -webkit-overflow-scrolling: touch; overscroll-behavior: contain;
+        border-radius: 16px 16px 0 0; background: #08080f; border-top: 1px solid #1e1e2e;
+        box-shadow: 0 -8px 40px rgba(0,0,0,0.7); padding: 0 10px 24px 10px;
+        transform: translateY(calc(100% - 52px)); transition: transform 0.32s cubic-bezier(0.4,0,0.2,1);
+        margin: 0; opacity: 1; pointer-events: auto;
+      }
+      body.sheet-open #sidebar { transform: translateY(0); }
+      #sidebar.collapsed { width: 100%; height: auto; margin: 0; opacity: 1; pointer-events: auto; transform: translateY(calc(100% - 52px)); }
+      body.sheet-open #sidebar.collapsed { transform: translateY(0); }
+
+      /* Sheet handle */
+      #sheet-handle-bar {
+        display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px;
+        height: 52px; cursor: pointer; user-select: none; flex-shrink: 0;
+        position: sticky; top: 0; z-index: 10; background: #08080f;
+        border-radius: 16px 16px 0 0; border-bottom: 1px solid #111118;
+        margin: 0 -10px 8px -10px; padding: 0 10px; touch-action: none;
+      }
+      .sheet-handle-pill { width: 36px; height: 4px; background: #333348; border-radius: 2px; transition: background 0.15s; }
+      #sheet-handle-bar:hover .sheet-handle-pill, #sheet-handle-bar:active .sheet-handle-pill { background: #5566aa; }
+      #sheet-label { font-size: 10px; text-transform: uppercase; letter-spacing: 0.14em; color: #556; font-family: Arial, sans-serif; }
+      body.sheet-open #sheet-label { color: #778; }
+
+      /* Backdrop */
+      #sheet-backdrop { display: none; position: fixed; inset: 0; z-index: 399; background: rgba(0,0,0,0); }
+      body.sheet-open #sheet-backdrop { display: block; }
+
+      /* Touch targets ≥44px */
+      button, input[type="date"], input[type="time"], input[type="text"], input[type="number"], select { min-height: 44px; font-size: 16px; }
+      .nav-btn { min-height: 44px; }
+      .nav-step button { min-height: 40px; font-size: 13px; }
+      .saved-item-btns button, .hist-item-btns button, .ev-btn { min-height: 36px; min-width: 36px; font-size: 13px; padding: 6px 8px; }
+      .accordion-header { min-height: 44px; display: flex; align-items: center; }
+      .panel { padding: 8px 10px; }
+      .panel h3 { margin-bottom: 6px; }
+      input[type="range"] { height: 28px; width: 100%; }
+
+      /* Bottom buttons above sheet peek */
+      #bottom-btns { bottom: 58px; right: 10px; }
+
+      /* Tour: mobile layout */
+      #tour-box { width: calc(100vw - 24px); max-width: 360px; }
+      #tour-arrow { display: none !important; }
+      #tour-highlight { box-shadow: 0 0 0 9999px rgba(2,2,8,0.65), 0 0 20px 4px rgba(70,110,255,0.45), inset 0 0 1px rgba(100,140,255,0.3); }
     }
     .accordion-panel { }
     .accordion-header {
@@ -1443,7 +1490,11 @@ new p5(function(sk) {
   function computeCanvasSize() {
     const isMobile = window.innerWidth <= 700;
     let availW, availH;
-    if (isMobile) { availW = window.innerWidth - 12; availH = window.innerHeight * 0.60; }
+    if (isMobile) {
+      availW = window.innerWidth - 8;
+      const vh = window.visualViewport ? window.visualViewport.height : window.innerHeight;
+      availH = vh - 52 - 8; // 52px sheet peek
+    }
     else {
       const sidebarEl = document.getElementById('sidebar');
       const sidebarCollapsed = sidebarEl && sidebarEl.classList.contains('collapsed');
@@ -2034,6 +2085,102 @@ new p5(function(sk) {
   window._checkBirthday = checkBirthday;
 })();
 
+// ─── Mobile Bottom Sheet ──────────────────────────────────────────────────────
+(function() {
+  function isMobileCheck() { return window.innerWidth <= 700; }
+  if (!isMobileCheck()) return;
+
+  const sidebar = document.getElementById('sidebar');
+
+  // Inject handle bar as first child of sidebar
+  const handleBar = document.createElement('div');
+  handleBar.id = 'sheet-handle-bar';
+  handleBar.setAttribute('role', 'button');
+  handleBar.setAttribute('aria-label', 'Toggle controls panel');
+  handleBar.setAttribute('tabindex', '0');
+  handleBar.innerHTML = '<div class="sheet-handle-pill"></div><span id="sheet-label">Controls</span>';
+  sidebar.insertBefore(handleBar, sidebar.firstChild);
+
+  // Inject backdrop
+  const backdrop = document.createElement('div');
+  backdrop.id = 'sheet-backdrop';
+  document.body.appendChild(backdrop);
+
+  let isOpen = false;
+
+  function open() {
+    isOpen = true;
+    document.body.classList.add('sheet-open');
+  }
+
+  function close() {
+    isOpen = false;
+    document.body.classList.remove('sheet-open');
+    sidebar.style.transform = '';
+    setTimeout(() => window.dispatchEvent(new Event('resize')), 340);
+  }
+
+  function toggle() { isOpen ? close() : open(); }
+
+  handleBar.addEventListener('click', toggle);
+  handleBar.addEventListener('keydown', e => {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(); }
+  });
+  backdrop.addEventListener('click', close);
+
+  // Drag gesture
+  let dragStartY = 0, dragStartOpen = false, dragging = false;
+
+  handleBar.addEventListener('touchstart', e => {
+    if (e.touches.length !== 1) return;
+    dragStartY = e.touches[0].clientY;
+    dragStartOpen = isOpen;
+    dragging = false;
+    sidebar.style.transition = 'none';
+  }, { passive: true });
+
+  handleBar.addEventListener('touchmove', e => {
+    if (e.touches.length !== 1) return;
+    const dy = e.touches[0].clientY - dragStartY;
+    if (!dragging && Math.abs(dy) < 12) return;
+    dragging = true;
+    const sheetH = sidebar.getBoundingClientRect().height;
+    const peekH = 52;
+    const baseTranslate = dragStartOpen ? 0 : sheetH - peekH;
+    const newTranslate = Math.max(0, Math.min(sheetH - peekH, baseTranslate + dy));
+    sidebar.style.transform = 'translateY(' + newTranslate + 'px)';
+    e.preventDefault();
+  }, { passive: false });
+
+  handleBar.addEventListener('touchend', e => {
+    sidebar.style.transition = '';
+    if (!dragging) return;
+    const dy = e.changedTouches[0].clientY - dragStartY;
+    if (dy > 80) close();
+    else if (dy < -80) open();
+    else { if (dragStartOpen) open(); else close(); }
+    dragging = false;
+  }, { passive: true });
+
+  // Handle orientation change
+  window.addEventListener('resize', () => {
+    if (!isMobileCheck()) {
+      document.body.classList.remove('sheet-open');
+      sidebar.style.transform = '';
+      sidebar.style.transition = '';
+    }
+  });
+
+  // iOS keyboard resize
+  if (window.visualViewport) {
+    window.visualViewport.addEventListener('resize', () => window.dispatchEvent(new Event('resize')));
+  }
+
+  window._sheetOpen = open;
+  window._sheetClose = close;
+  window._sheetIsOpen = () => isOpen;
+})();
+
 // ─── Tutorial / Guided Tour ──────────────────────────────────────────────────
 (function() {
   const TOUR_KEY = 'solarClockTourDone';
@@ -2144,9 +2291,15 @@ new p5(function(sk) {
     }
     const el = document.querySelector(t);
     if (!el) return null;
-    const sidebar = $('sidebar');
-    if (sidebar && sidebar.classList.contains('collapsed')) {
-      $('sidebarToggle').click();
+    if (window.innerWidth <= 700) {
+      if (typeof window._sheetOpen === 'function' && typeof window._sheetIsOpen === 'function' && !window._sheetIsOpen()) {
+        window._sheetOpen();
+      }
+    } else {
+      const sidebar = $('sidebar');
+      if (sidebar && sidebar.classList.contains('collapsed')) {
+        $('sidebarToggle').click();
+      }
     }
     el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
     return el.getBoundingClientRect();
@@ -2230,39 +2383,52 @@ new p5(function(sk) {
 
       // Position box intelligently
       box.style.transform = 'none';
-      const bw = 320;
+      let bw = 320;
       const boxEl = box;
       boxEl.style.display = 'block';
       boxEl.style.left = '0px'; boxEl.style.top = '0px';
       const bh = boxEl.offsetHeight || 220;
+      const mobileView = window.innerWidth <= 700;
 
       let bx, by;
-      // Try right
-      if (rect.left + rect.width + bw + 24 < window.innerWidth) {
-        bx = rect.left + rect.width + 18;
-        by = Math.max(10, rect.top + rect.height / 2 - bh / 2);
+      if (mobileView) {
+        const safeBottom = window.innerHeight - 52 - 10;
+        bw = Math.min(window.innerWidth - 24, 360);
+        boxEl.style.width = bw + 'px';
+        bx = (window.innerWidth - bw) / 2;
+        if (rect.top - bh - 18 > 10) {
+          by = rect.top - bh - 18;
+        } else if (rect.top + rect.height + bh + 18 < safeBottom) {
+          by = rect.top + rect.height + 18;
+        } else {
+          by = 10;
+        }
+        by = Math.max(10, Math.min(by, safeBottom - bh));
+        arrowEl.style.display = 'none';
+      } else {
+        boxEl.style.width = '';
+        if (rect.left + rect.width + bw + 24 < window.innerWidth) {
+          bx = rect.left + rect.width + 18;
+          by = Math.max(10, rect.top + rect.height / 2 - bh / 2);
+        }
+        else if (rect.left - bw - 24 > 0) {
+          bx = rect.left - bw - 18;
+          by = Math.max(10, rect.top + rect.height / 2 - bh / 2);
+        }
+        else if (rect.top + rect.height + bh + 24 < window.innerHeight) {
+          bx = Math.max(10, rect.left + rect.width / 2 - bw / 2);
+          by = rect.top + rect.height + 18;
+        }
+        else {
+          bx = Math.max(10, rect.left + rect.width / 2 - bw / 2);
+          by = Math.max(10, rect.top - bh - 18);
+        }
+        bx = Math.max(10, Math.min(bx, window.innerWidth - bw - 10));
+        by = Math.max(10, Math.min(by, window.innerHeight - bh - 10));
+        drawArrow(rect, bx, by, bw);
       }
-      // Try left
-      else if (rect.left - bw - 24 > 0) {
-        bx = rect.left - bw - 18;
-        by = Math.max(10, rect.top + rect.height / 2 - bh / 2);
-      }
-      // Try below
-      else if (rect.top + rect.height + bh + 24 < window.innerHeight) {
-        bx = Math.max(10, rect.left + rect.width / 2 - bw / 2);
-        by = rect.top + rect.height + 18;
-      }
-      // Above
-      else {
-        bx = Math.max(10, rect.left + rect.width / 2 - bw / 2);
-        by = Math.max(10, rect.top - bh - 18);
-      }
-      bx = Math.max(10, Math.min(bx, window.innerWidth - bw - 10));
-      by = Math.max(10, Math.min(by, window.innerHeight - bh - 10));
       box.style.left = bx + 'px';
       box.style.top  = by + 'px';
-
-      drawArrow(rect, bx, by, bw);
     });
   }
 
